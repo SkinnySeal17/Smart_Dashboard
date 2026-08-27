@@ -1,0 +1,72 @@
+[
+  {
+    "id": "1",
+    "name": "Netflix",
+    "category": "Entertainment",
+    "cost": 22.99,
+    "billingCycle": "Monthly",
+    "renewalDate": "2026-09-15",
+    "status": "Active",
+    "notes": "Standard plan"
+  },
+  {
+    "id": "2",
+    "name": "Spotify Premium",
+    "category": "Entertainment",
+    "cost": 12.99,
+    "billingCycle": "Monthly",
+    "renewalDate": "2026-09-03",
+    "status": "Active",
+    "notes": ""
+  },
+  {
+    "id": "3",
+    "name": "Gym Membership",
+    "category": "Health",
+    "cost": 49.00,
+    "billingCycle": "Monthly",
+    "renewalDate": "2026-09-01",
+    "status": "Active",
+    "notes": "Anytime Fitness"
+  },
+  {
+    "id": "4",
+    "name": "Electricity Bill",
+    "category": "Utilities",
+    "cost": 145.50,
+    "billingCycle": "Monthly",
+    "renewalDate": "2026-09-10",
+    "status": "Active",
+    "notes": "Origin Energy"
+  },
+  {
+    "id": "5",
+    "name": "Adobe Creative Cloud",
+    "category": "Software",
+    "cost": 29.99,
+    "billingCycle": "Monthly",
+    "renewalDate": "2026-10-05",
+    "status": "Active",
+    "notes": ""
+  },
+  {
+    "id": "6",
+    "name": "Amazon Prime",
+    "category": "Shopping",
+    "cost": 79.00,
+    "billingCycle": "Yearly",
+    "renewalDate": "2027-03-12",
+    "status": "Active",
+    "notes": ""
+  },
+  {
+    "id": "7",
+    "name": "Old Newspaper Subscription",
+    "category": "Media",
+    "cost": 15.00,
+    "billingCycle": "Monthly",
+    "renewalDate": "2026-08-20",
+    "status": "Cancelled",
+    "notes": "Cancelled last month"
+  }
+]
