@@ -1,26 +1,20 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
+import MobileTabBar from "./MobileTabBar";
 
 export default function DashboardLayout() {
   return (
     <div className="layout">
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
       <Sidebar />
       <div className="layout__main">
-        <header className="topbar">
-          <input
-            className="topbar__search"
-            type="search"
-            placeholder="Search…"
-            aria-label="Search"
-          />
-          <div className="topbar__right">
-            <span className="topbar__bell" aria-hidden="true">🔔</span>
-          </div>
-        </header>
-        <main className="content">
+        <main id="main-content" className="content">
           <Outlet />
         </main>
       </div>
+      <MobileTabBar />
     </div>
   );
 }

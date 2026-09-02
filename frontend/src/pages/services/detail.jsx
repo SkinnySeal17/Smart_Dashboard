@@ -1,10 +1,18 @@
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Card from "../../components/ui/Card";
 import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
+import Modal from "../../components/ui/Modal";
+import Flash from "../../components/ui/Flash";
+import Skeleton from "../../components/ui/Skeleton";
+import ErrorState from "../../components/ui/ErrorState";
 import PageHeader from "../../components/ui/PageHeader";
+import RenewalHistory from "../../components/detail/RenewalHistory";
+import ServiceNotes from "../../components/detail/ServiceNotes";
 import { useServices } from "../../context/ServicesContext";
 import { useSettings } from "../../context/SettingsContext";
+import { useFlash } from "../../hooks/useFlash";
 import { formatDateTime, renewalLabel } from "../../utils/date";
 import {
   formatMoney,
@@ -16,8 +24,28 @@ import {
 export default function ServiceDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getService, deleteService } = useServices();
+  const { getService, deleteService, loading, error, reload } = useServices();
   const { getCategory, preferences } = useSettings();
+  const flash = useFlash();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="page-narrow">
+        <Card title="Loading…">
+          <Skeleton lines={6} />
+        </Card>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page-narrow">
+        <ErrorState message={error} onRetry={reload} />
+      </div>
+    );
+  }
 
   const service = getService(id);
 
@@ -43,15 +71,19 @@ export default function ServiceDetailPage() {
     service.billingCycle === "one_time" ? "" : ` / ${cycleLabel.toLowerCase()}`
   }`;
 
-  function handleDelete() {
-    if (window.confirm(`Delete “${service.name}”? This can't be undone.`)) {
-      deleteService(service.id);
-      navigate("/services", { replace: true });
-    }
+  function confirmDelete() {
+    const name = service.name;
+    deleteService(service.id);
+    navigate("/services", {
+      replace: true,
+      state: { flash: `Deleted “${name}”.` },
+    });
   }
 
   return (
     <div className="page-narrow">
+      {flash && <Flash>{flash}</Flash>}
+
       <PageHeader
         title={service.name}
         back={
@@ -64,7 +96,7 @@ export default function ServiceDetailPage() {
             <Button as={Link} variant="ghost" to={`/services/${service.id}/edit`}>
               Edit
             </Button>
-            <Button variant="danger" onClick={handleDelete}>
+            <Button variant="danger" onClick={() => setConfirmOpen(true)}>
               Delete
             </Button>
           </>
@@ -117,11 +149,29 @@ export default function ServiceDetailPage() {
           </div>
         </dl>
 
-        <div className="detail-desc">
-          <dt>Notes</dt>
-          <dd>{service.notes ? service.notes : <em>No notes.</em>}</dd>
-        </div>
+        <RenewalHistory service={service} />
+        <ServiceNotes notes={service.notes} />
       </Card>
+
+      <Modal
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        title="Delete service"
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p>
+          Delete “{service.name}”? This can&rsquo;t be undone.
+        </p>
+      </Modal>
     </div>
   );
 }

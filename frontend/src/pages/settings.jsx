@@ -1,6 +1,8 @@
 import { useState } from "react";
 import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
+import Modal from "../components/ui/Modal";
+import Button from "../components/ui/Button";
 import { useSettings } from "../context/SettingsContext";
 import { useServices } from "../context/ServicesContext";
 import { validateCategory, CATEGORY_LIMITS } from "../lib/validateService";
@@ -35,6 +37,8 @@ export default function SettingsPage() {
   const [editName, setEditName] = useState("");
   const [editError, setEditError] = useState("");
 
+  const [pendingDelete, setPendingDelete] = useState(null);
+
   function handleAdd(e) {
     e.preventDefault();
     const errors = validateCategory({ name: newName }, { categories });
@@ -68,18 +72,9 @@ export default function SettingsPage() {
     setEditError("");
   }
 
-  function handleDelete(cat) {
-    const inUse = countByCategory(cat.id);
-    if (inUse > 0) {
-      window.alert(
-        `“${cat.name}” is used by ${inUse} service${inUse === 1 ? "" : "s"}. ` +
-          `Reassign or remove those services first.`,
-      );
-      return;
-    }
-    if (window.confirm(`Delete category “${cat.name}”?`)) {
-      deleteCategory(cat.id);
-    }
+  function confirmDelete() {
+    if (pendingDelete) deleteCategory(pendingDelete.id);
+    setPendingDelete(null);
   }
 
   return (
@@ -148,7 +143,7 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         className="btn btn--ghost btn--sm"
-                        onClick={() => handleDelete(cat)}
+                        onClick={() => setPendingDelete(cat)}
                         disabled={inUse > 0}
                         title={
                           inUse > 0 ? "In use by services" : "Delete category"
@@ -207,20 +202,24 @@ export default function SettingsPage() {
 
       <Card title="Preferences">
         <div className="sform__row">
-          <label className="field">
-            <span className="field__label">Currency symbol</span>
+          <div className="field">
+            <label className="field__label" htmlFor="pref-currency">
+              Currency symbol
+            </label>
             <input
+              id="pref-currency"
               className="field__input"
               value={preferences.currency}
               maxLength={3}
-              onChange={(e) =>
-                updatePreferences({ currency: e.target.value })
-              }
+              onChange={(e) => updatePreferences({ currency: e.target.value })}
             />
-          </label>
-          <label className="field">
-            <span className="field__label">Default status for new services</span>
+          </div>
+          <div className="field">
+            <label className="field__label" htmlFor="pref-status">
+              Default status for new services
+            </label>
             <select
+              id="pref-status"
               className="field__input"
               value={preferences.defaultStatus}
               onChange={(e) =>
@@ -230,12 +229,30 @@ export default function SettingsPage() {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
-          </label>
+          </div>
         </div>
         <p className="field__hint">
           Preferences and categories are saved to this browser only.
         </p>
       </Card>
+
+      <Modal
+        open={Boolean(pendingDelete)}
+        onClose={() => setPendingDelete(null)}
+        title="Delete category"
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setPendingDelete(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p>Delete the “{pendingDelete?.name}” category?</p>
+      </Modal>
     </div>
   );
 }

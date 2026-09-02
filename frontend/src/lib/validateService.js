@@ -80,8 +80,8 @@ export function validateService(values = {}, options = {}) {
     const cost = Number(rawCost);
     if (!Number.isFinite(cost)) {
       errors.cost = "Cost must be a number.";
-    } else if (cost < SERVICE_LIMITS.cost.min) {
-      errors.cost = "Cost cannot be negative.";
+    } else if (cost <= SERVICE_LIMITS.cost.min) {
+      errors.cost = "Cost must be greater than 0.";
     } else if (cost > SERVICE_LIMITS.cost.max) {
       errors.cost = `Cost cannot exceed ${SERVICE_LIMITS.cost.max.toLocaleString(
         "en-US",
@@ -126,6 +126,28 @@ export function validateService(values = {}, options = {}) {
   }
 
   return errors;
+}
+
+/**
+ * Non-blocking advisories for a service draft. Currently: a renewal date in the
+ * past is flagged (but still allowed — you may be logging an overdue service).
+ * @returns {Record<string,string>} field -> message. Empty = nothing to flag.
+ */
+export function serviceWarnings(values = {}) {
+  const warnings = {};
+  const rd = values.renewalDate;
+
+  if (typeof rd === "string" && ISO_DATE_RE.test(rd)) {
+    const [y, m, d] = rd.split("-").map(Number);
+    const dt = new Date(y, m - 1, d);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (!Number.isNaN(dt.getTime()) && dt < today) {
+      warnings.renewalDate = "This renewal date is in the past.";
+    }
+  }
+
+  return warnings;
 }
 
 /**
