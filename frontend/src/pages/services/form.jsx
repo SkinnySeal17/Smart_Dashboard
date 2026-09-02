@@ -1,6 +1,8 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Card from "../../components/ui/Card";
 import PageHeader from "../../components/ui/PageHeader";
+import Skeleton from "../../components/ui/Skeleton";
+import ErrorState from "../../components/ui/ErrorState";
 import ServiceForm from "../../components/ServiceForm";
 import { useServices } from "../../context/ServicesContext";
 import { useSettings } from "../../context/SettingsContext";
@@ -9,8 +11,27 @@ export default function ServiceFormPage() {
   const { id } = useParams();
   const editing = Boolean(id);
   const navigate = useNavigate();
-  const { getService, createService, updateService } = useServices();
+  const { getService, createService, updateService, loading, error, reload } =
+    useServices();
   const { preferences } = useSettings();
+
+  if (editing && loading) {
+    return (
+      <div className="page-narrow">
+        <Card title="Loading…">
+          <Skeleton lines={5} />
+        </Card>
+      </div>
+    );
+  }
+
+  if (editing && error) {
+    return (
+      <div className="page-narrow">
+        <ErrorState message={error} onRetry={reload} />
+      </div>
+    );
+  }
 
   const existing = editing ? getService(id) : null;
 
@@ -51,7 +72,10 @@ export default function ServiceFormPage() {
 
   async function handleSubmit(values) {
     const saved = editing ? updateService(id, values) : createService(values);
-    navigate(`/services/${saved.id}`, { replace: true });
+    navigate(`/services/${saved.id}`, {
+      replace: true,
+      state: { flash: editing ? "Changes saved." : "Service created." },
+    });
   }
 
   return (

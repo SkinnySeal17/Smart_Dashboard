@@ -4,9 +4,13 @@ import Card from "../../components/ui/Card";
 import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
 import EmptyState from "../../components/ui/EmptyState";
+import ErrorState from "../../components/ui/ErrorState";
+import Skeleton from "../../components/ui/Skeleton";
 import PageHeader from "../../components/ui/PageHeader";
+import Flash from "../../components/ui/Flash";
 import { useServices } from "../../context/ServicesContext";
 import { useSettings } from "../../context/SettingsContext";
+import { useFlash } from "../../hooks/useFlash";
 import { renewalLabel } from "../../utils/date";
 import {
   formatMoney,
@@ -17,8 +21,9 @@ import {
 } from "../../utils/format";
 
 export default function ServicesListPage() {
-  const { services } = useServices();
+  const { services, loading, error, reload } = useServices();
   const { categories, getCategory, preferences } = useSettings();
+  const flash = useFlash();
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
@@ -33,6 +38,8 @@ export default function ServicesListPage() {
 
   return (
     <div className="dashboard">
+      {flash && <Flash>{flash}</Flash>}
+
       <PageHeader
         title="Services"
         actions={
@@ -42,6 +49,13 @@ export default function ServicesListPage() {
         }
       />
 
+      {error ? (
+        <ErrorState message={error} onRetry={reload} />
+      ) : loading ? (
+        <Card title="Loading…">
+          <Skeleton lines={6} />
+        </Card>
+      ) : (
       <Card
         title={`${rows.length} of ${services.length}`}
         action={
@@ -145,6 +159,7 @@ export default function ServicesListPage() {
           </div>
         )}
       </Card>
+      )}
     </div>
   );
 }

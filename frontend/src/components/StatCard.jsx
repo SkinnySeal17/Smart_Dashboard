@@ -3,9 +3,9 @@ import { cn } from "../lib/cn";
 
 /**
  * Simple metric tile. `value` may be a number (counts up) or a preformatted
- * string (shown as-is). `hint` is a small caption; `delta`/`trend` optional.
+ * string (shown as-is). `icon` and `hint` are optional.
  */
-export default function StatCard({ label, value, hint, delta, trend }) {
+export default function StatCard({ icon, label, value, hint, delta, trend }) {
   const isNumber = typeof value === "number";
   const animated = useCountUp(isNumber ? value : 0);
   const n = isNumber && value >= 100 ? Math.round(animated) : value;
@@ -14,6 +14,11 @@ export default function StatCard({ label, value, hint, delta, trend }) {
 
   return (
     <div className="stat">
+      {icon && (
+        <span className="stat__icon" aria-hidden="true">
+          {icon}
+        </span>
+      )}
       <span className="stat__label">{label}</span>
       <span className="stat__value">{display}</span>
       {delta != null ? (

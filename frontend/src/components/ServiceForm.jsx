@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   validateService,
+  serviceWarnings,
   isValid,
   SERVICE_STATUSES,
   SERVICE_LIMITS,
@@ -10,8 +11,14 @@ import {
 } from "../lib/validateService";
 import { useSettings } from "../context/SettingsContext";
 import Alert from "./ui/Alert";
+import TextField from "./forms/TextField";
+import SelectField from "./forms/SelectField";
+import DateField from "./forms/DateField";
+import TextareaField from "./forms/TextareaField";
 
 const STATUS_LABELS = { active: "Active", inactive: "Inactive" };
+// Order used to move focus to the first field with an error on submit.
+const FIELD_ORDER = ["name", "category", "cost", "billingCycle", "renewalDate", "notes"];
 
 /**
  * Reusable service form for both add and edit. Presentation only — the parent
@@ -33,12 +40,16 @@ export default function ServiceForm({
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const formRef = useRef(null);
 
   const errors = useMemo(
     () => validateService(values, { categories }),
     [values, categories],
   );
-  const fieldError = (field) =>
+  const warnings = useMemo(() => serviceWarnings(values), [values]);
+  const invalid = !isValid(errors);
+
+  const shownError = (field) =>
     (touched[field] || submitAttempted) && errors[field] ? errors[field] : "";
 
   const setField = (field) => (e) =>
@@ -50,7 +61,12 @@ export default function ServiceForm({
     e.preventDefault();
     setSubmitAttempted(true);
     setSubmitError("");
-    if (!isValid(errors)) return;
+
+    if (invalid) {
+      const firstBad = FIELD_ORDER.find((f) => errors[f]);
+      if (firstBad) formRef.current?.querySelector(`#sf-${firstBad}`)?.focus();
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -64,100 +80,66 @@ export default function ServiceForm({
   const notesLen = (values.notes ?? "").length;
 
   return (
-    <form className="sform" onSubmit={handleSubmit} noValidate>
+    <form ref={formRef} className="sform" onSubmit={handleSubmit} noValidate>
       {submitError && <Alert>{submitError}</Alert>}
 
-      <label className="field">
-        <span className="field__label">Name</span>
-        <input
-          type="text"
-          value={values.name}
-          onChange={setField("name")}
-          onBlur={markTouched("name")}
-          className={`field__input${fieldError("name") ? " field__input--error" : ""}`}
-          placeholder="e.g. Figma Organization"
-          aria-invalid={Boolean(fieldError("name"))}
-        />
-        {fieldError("name") && (
-          <span className="field__error">{errors.name}</span>
-        )}
-      </label>
+      <TextField
+        id="sf-name"
+        label="Name"
+        value={values.name}
+        onChange={setField("name")}
+        onBlur={markTouched("name")}
+        error={shownError("name")}
+        placeholder="e.g. Figma Organization"
+        autoComplete="off"
+      />
 
-      <label className="field">
-        <span className="field__label">Category</span>
-        <select
-          value={values.category}
-          onChange={setField("category")}
-          onBlur={markTouched("category")}
-          className={`field__input${fieldError("category") ? " field__input--error" : ""}`}
-          aria-invalid={Boolean(fieldError("category"))}
-        >
-          <option value="">Select a category…</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        {fieldError("category") && (
-          <span className="field__error">{errors.category}</span>
-        )}
-      </label>
+      <SelectField
+        id="sf-category"
+        label="Category"
+        value={values.category}
+        onChange={setField("category")}
+        onBlur={markTouched("category")}
+        error={shownError("category")}
+        placeholder="Select a category…"
+        options={categories.map((c) => ({ value: c.id, label: c.name }))}
+      />
 
       <div className="sform__row sform__row--3">
-        <label className="field">
-          <span className="field__label">Cost</span>
-          <input
-            type="number"
-            inputMode="decimal"
-            min="0"
-            step="0.01"
-            value={values.cost}
-            onChange={setField("cost")}
-            onBlur={markTouched("cost")}
-            className={`field__input${fieldError("cost") ? " field__input--error" : ""}`}
-            placeholder="0.00"
-            aria-invalid={Boolean(fieldError("cost"))}
-          />
-          {fieldError("cost") && (
-            <span className="field__error">{errors.cost}</span>
-          )}
-        </label>
-
-        <label className="field">
-          <span className="field__label">Billing cycle</span>
-          <select
-            value={values.billingCycle}
-            onChange={setField("billingCycle")}
-            onBlur={markTouched("billingCycle")}
-            className={`field__input${fieldError("billingCycle") ? " field__input--error" : ""}`}
-            aria-invalid={Boolean(fieldError("billingCycle"))}
-          >
-            {BILLING_CYCLES.map((c) => (
-              <option key={c} value={c}>
-                {BILLING_CYCLE_LABELS[c]}
-              </option>
-            ))}
-          </select>
-          {fieldError("billingCycle") && (
-            <span className="field__error">{errors.billingCycle}</span>
-          )}
-        </label>
-
-        <label className="field">
-          <span className="field__label">Renewal date</span>
-          <input
-            type="date"
-            value={values.renewalDate}
-            onChange={setField("renewalDate")}
-            onBlur={markTouched("renewalDate")}
-            className={`field__input${fieldError("renewalDate") ? " field__input--error" : ""}`}
-            aria-invalid={Boolean(fieldError("renewalDate"))}
-          />
-          {fieldError("renewalDate") && (
-            <span className="field__error">{errors.renewalDate}</span>
-          )}
-        </label>
+        <TextField
+          id="sf-cost"
+          label="Cost"
+          type="number"
+          inputMode="decimal"
+          min="0"
+          step="0.01"
+          value={values.cost}
+          onChange={setField("cost")}
+          onBlur={markTouched("cost")}
+          error={shownError("cost")}
+          placeholder="0.00"
+        />
+        <SelectField
+          id="sf-billingCycle"
+          label="Billing cycle"
+          value={values.billingCycle}
+          onChange={setField("billingCycle")}
+          onBlur={markTouched("billingCycle")}
+          error={shownError("billingCycle")}
+          options={BILLING_CYCLES.map((c) => ({
+            value: c,
+            label: BILLING_CYCLE_LABELS[c],
+          }))}
+        />
+        <DateField
+          id="sf-renewalDate"
+          label="Renewal date"
+          value={values.renewalDate}
+          onChange={setField("renewalDate")}
+          onBlur={markTouched("renewalDate")}
+          error={shownError("renewalDate")}
+          warning={warnings.renewalDate}
+        />
       </div>
 
       <fieldset className="field sform__status">
@@ -179,36 +161,28 @@ export default function ServiceForm({
             </label>
           ))}
         </div>
-        {fieldError("status") && (
-          <span className="field__error">{errors.status}</span>
-        )}
       </fieldset>
 
-      <label className="field">
-        <span className="field__label">
-          Notes <span className="field__hint">optional</span>
-        </span>
-        <textarea
-          rows={4}
-          value={values.notes}
-          onChange={setField("notes")}
-          onBlur={markTouched("notes")}
-          className={`field__input field__input--area${fieldError("notes") ? " field__input--error" : ""}`}
-          placeholder="Seats, billing owner, cancellation terms…"
-          aria-invalid={Boolean(fieldError("notes"))}
-        />
-        <span
-          className={`field__counter${notesLen > SERVICE_LIMITS.notes.max ? " field__counter--over" : ""}`}
-        >
-          {notesLen}/{SERVICE_LIMITS.notes.max}
-        </span>
-        {fieldError("notes") && (
-          <span className="field__error">{errors.notes}</span>
-        )}
-      </label>
+      <TextareaField
+        id="sf-notes"
+        label="Notes"
+        hint="optional"
+        rows={4}
+        value={values.notes}
+        onChange={setField("notes")}
+        onBlur={markTouched("notes")}
+        error={shownError("notes")}
+        placeholder="Seats, billing owner, cancellation terms…"
+        counter={`${notesLen}/${SERVICE_LIMITS.notes.max}`}
+        counterOver={notesLen > SERVICE_LIMITS.notes.max}
+      />
 
       <div className="form-actions">
-        <button type="submit" className="btn btn--primary" disabled={submitting}>
+        <button
+          type="submit"
+          className="btn btn--primary"
+          disabled={submitting || invalid}
+        >
           {submitting ? "Saving…" : submitLabel}
         </button>
         {onCancel && (

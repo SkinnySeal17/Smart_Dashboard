@@ -2,10 +2,19 @@ import { describe, it, expect } from "vitest";
 import {
   validateService,
   validateCategory,
+  serviceWarnings,
   isValid,
   SERVICE_LIMITS,
   CATEGORY_LIMITS,
 } from "./validateService";
+
+function isoDaysFromNow(delta) {
+  const d = new Date();
+  d.setDate(d.getDate() + delta);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+}
 
 const categories = [
   { id: "cat_web", name: "Web" },
@@ -29,10 +38,10 @@ describe("validateService — happy path", () => {
     expect(isValid(errors)).toBe(true);
   });
 
-  it("accepts cost of exactly 0", () => {
-    expect(validateService({ ...validDraft, cost: "0" }, { categories })).toEqual(
-      {},
-    );
+  it("rejects a cost of 0 (must be positive)", () => {
+    expect(
+      validateService({ ...validDraft, cost: "0" }, { categories }).cost,
+    ).toBe("Cost must be greater than 0.");
   });
 
   it("accepts a numeric cost (not just strings)", () => {
@@ -137,7 +146,7 @@ describe("validateService — cost", () => {
   it("rejects negative cost", () => {
     expect(
       validateService({ ...validDraft, cost: "-1" }, { categories }).cost,
-    ).toBe("Cost cannot be negative.");
+    ).toBe("Cost must be greater than 0.");
   });
 
   it("rejects cost above the maximum", () => {
@@ -302,6 +311,28 @@ describe("validateService — robustness", () => {
       "renewalDate",
       "status",
     ]);
+  });
+});
+
+describe("serviceWarnings", () => {
+  it("flags a renewal date in the past", () => {
+    expect(serviceWarnings({ renewalDate: isoDaysFromNow(-1) }).renewalDate).toMatch(
+      /in the past/,
+    );
+    expect(serviceWarnings({ renewalDate: "2000-01-01" }).renewalDate).toMatch(
+      /in the past/,
+    );
+  });
+
+  it("does not flag today or a future date", () => {
+    expect(serviceWarnings({ renewalDate: isoDaysFromNow(0) })).toEqual({});
+    expect(serviceWarnings({ renewalDate: isoDaysFromNow(30) })).toEqual({});
+  });
+
+  it("does not flag an empty or malformed date", () => {
+    expect(serviceWarnings({ renewalDate: "" })).toEqual({});
+    expect(serviceWarnings({ renewalDate: "not-a-date" })).toEqual({});
+    expect(serviceWarnings({})).toEqual({});
   });
 });
 
