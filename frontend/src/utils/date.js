@@ -1,9 +1,20 @@
 // Date formatting helpers for rendering renewal dates. UI-only, no validation here.
 
-export function formatDate(iso, opts = { dateStyle: "medium" }) {
+export const DATE_STYLES = ["short", "medium", "long"];
+
+// Module-level default date style. Kept in sync with the user's saved preference
+// by SettingsContext (setDateStyle). Defaults to "medium" so callers that don't
+// pass explicit options behave exactly as before until a preference is applied.
+let currentDateStyle = "medium";
+
+export function setDateStyle(style) {
+  currentDateStyle = DATE_STYLES.includes(style) ? style : "medium";
+}
+
+export function formatDate(iso, opts) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return String(iso ?? "");
-  return d.toLocaleDateString("en-US", opts);
+  return d.toLocaleDateString("en-US", opts ?? { dateStyle: currentDateStyle });
 }
 
 export function formatDateTime(iso) {
