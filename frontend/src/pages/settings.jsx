@@ -174,8 +174,7 @@ export default function SettingsPage() {
       />
       <p className="settings__intro">
         Manage your profile, notifications, appearance, and dashboard
-        preferences. This app has no backend — everything here is saved to this
-        browser only.
+        preferences.
       </p>
 
       {flash && <Flash>{flash}</Flash>}
@@ -255,14 +254,12 @@ export default function SettingsPage() {
       {/* ----------------------------- Notifications --------------------- */}
       <Card title="Notifications">
         <p className="field__hint settings__note">
-          Choose which reminders you want. Preferences are stored locally — this
-          demo doesn&rsquo;t actually send email. Changes save automatically.
+          Choose which reminders you want.
         </p>
 
         <div className="toggle-list">
           <Toggle
             label="Email notifications"
-            description="Master switch for every reminder below."
             checked={notifications.email}
             onChange={(v) => {
               updateNotifications({ email: v });
@@ -312,9 +309,9 @@ export default function SettingsPage() {
           />
           <Toggle
             label="Weekly spend summary"
-            description="A Monday email with your monthly spend and upcoming renewals."
+            description="A email with your monthly spend and upcoming renewals."
             checked={notifications.weeklySummary}
-            disabled={!notifications.email}
+            disabled={!notifications.email} 
             onChange={(v) => {
               updateNotifications({ weeklySummary: v });
               announce("Notification preference saved.");
@@ -349,10 +346,6 @@ export default function SettingsPage() {
               </label>
             ))}
           </div>
-          <p className="field__hint">
-            “System” follows your device’s light / dark setting. Your choice is
-            kept as you move between pages.
-          </p>
         </fieldset>
       </Card>
 
@@ -375,7 +368,6 @@ export default function SettingsPage() {
               onBlur={() => announce("Preference saved.")}
             />
             <span id="pref-currency-hint" className="field__hint">
-              Shown next to every amount.
             </span>
           </div>
 
@@ -408,7 +400,6 @@ export default function SettingsPage() {
           />
         </div>
         <p className="field__hint settings__note">
-          Preferences apply across the dashboard and save automatically.
         </p>
       </Card>
 

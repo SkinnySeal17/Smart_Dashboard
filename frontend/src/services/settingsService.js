@@ -12,8 +12,8 @@ export const RENEWAL_LEAD_DAYS = [1, 3, 7, 14];
 
 export const DEFAULTS = {
   profile: {
-    name: "Alex Morgan",
-    email: "alex.morgan@example.com",
+    name: "Three idiots",
+    email: "three.idiots@example.com",
   },
   categories: [
     { id: "cat_web", name: "Web Development", color: "#aa3bff" },
