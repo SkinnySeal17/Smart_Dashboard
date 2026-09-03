@@ -178,11 +178,7 @@ export default function ServiceForm({
       />
 
       <div className="form-actions">
-        <button
-          type="submit"
-          className="btn btn--primary"
-          disabled={submitting || invalid}
-        >
+        <button type="submit" className="btn btn--primary" disabled={submitting}>
           {submitting ? "Saving…" : submitLabel}
         </button>
         {onCancel && (
