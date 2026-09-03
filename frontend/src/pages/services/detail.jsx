@@ -93,7 +93,7 @@ export default function ServiceDetailPage() {
         }
         actions={
           <>
-            <Button as={Link} variant="ghost" to={`/services/${service.id}/edit`}>
+            <Button as={Link} variant="primary" to={`/services/${service.id}/edit`}>
               Edit
             </Button>
             <Button variant="danger" onClick={() => setConfirmOpen(true)}>
@@ -160,16 +160,17 @@ export default function ServiceDetailPage() {
         actions={
           <>
             <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
-              Cancel
+              Keep service
             </Button>
             <Button variant="danger" onClick={confirmDelete}>
-              Delete
+              Delete service
             </Button>
           </>
         }
       >
         <p>
-          Delete “{service.name}”? This can&rsquo;t be undone.
+          Delete “{service.name}”? It will be removed from your services list.
+          This can&rsquo;t be undone.
         </p>
       </Modal>
     </div>
