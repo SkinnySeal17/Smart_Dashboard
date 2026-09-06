@@ -83,99 +83,111 @@ export default function ServiceForm({
     <form ref={formRef} className="sform" onSubmit={handleSubmit} noValidate>
       {submitError && <Alert>{submitError}</Alert>}
 
-      <TextField
-        id="sf-name"
-        label="Name"
-        value={values.name}
-        onChange={setField("name")}
-        onBlur={markTouched("name")}
-        error={shownError("name")}
-        placeholder="e.g. Figma Organization"
-        autoComplete="off"
-      />
+      <fieldset className="form-group">
+        <legend className="form-group__legend">Service information</legend>
 
-      <SelectField
-        id="sf-category"
-        label="Category"
-        value={values.category}
-        onChange={setField("category")}
-        onBlur={markTouched("category")}
-        error={shownError("category")}
-        placeholder="Select a category…"
-        options={categories.map((c) => ({ value: c.id, label: c.name }))}
-      />
-
-      <div className="sform__row sform__row--3">
         <TextField
-          id="sf-cost"
-          label="Cost"
-          type="number"
-          inputMode="decimal"
-          min="0"
-          step="0.01"
-          value={values.cost}
-          onChange={setField("cost")}
-          onBlur={markTouched("cost")}
-          error={shownError("cost")}
-          placeholder="0.00"
+          id="sf-name"
+          label="Name"
+          value={values.name}
+          onChange={setField("name")}
+          onBlur={markTouched("name")}
+          error={shownError("name")}
+          placeholder="e.g. Figma Organization"
+          autoComplete="off"
         />
-        <SelectField
-          id="sf-billingCycle"
-          label="Billing cycle"
-          value={values.billingCycle}
-          onChange={setField("billingCycle")}
-          onBlur={markTouched("billingCycle")}
-          error={shownError("billingCycle")}
-          options={BILLING_CYCLES.map((c) => ({
-            value: c,
-            label: BILLING_CYCLE_LABELS[c],
-          }))}
-        />
-        <DateField
-          id="sf-renewalDate"
-          label="Renewal date"
-          value={values.renewalDate}
-          onChange={setField("renewalDate")}
-          onBlur={markTouched("renewalDate")}
-          error={shownError("renewalDate")}
-          warning={warnings.renewalDate}
-        />
-      </div>
 
-      <fieldset className="field sform__status">
-        <legend className="field__label">Status</legend>
-        <div className="segmented">
-          {SERVICE_STATUSES.map((s) => (
-            <label
-              key={s}
-              className={`segmented__opt${values.status === s ? " is-active" : ""}`}
-            >
-              <input
-                type="radio"
-                name="status"
-                value={s}
-                checked={values.status === s}
-                onChange={setField("status")}
-              />
-              {STATUS_LABELS[s]}
-            </label>
-          ))}
+        <SelectField
+          id="sf-category"
+          label="Category"
+          value={values.category}
+          onChange={setField("category")}
+          onBlur={markTouched("category")}
+          error={shownError("category")}
+          placeholder="Select a category…"
+          options={categories.map((c) => ({ value: c.id, label: c.name }))}
+        />
+      </fieldset>
+
+      <fieldset className="form-group">
+        <legend className="form-group__legend">Billing</legend>
+
+        <div className="sform__row sform__row--3">
+          <TextField
+            id="sf-cost"
+            label="Cost"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="0.01"
+            value={values.cost}
+            onChange={setField("cost")}
+            onBlur={markTouched("cost")}
+            error={shownError("cost")}
+            placeholder="0.00"
+          />
+          <SelectField
+            id="sf-billingCycle"
+            label="Billing cycle"
+            value={values.billingCycle}
+            onChange={setField("billingCycle")}
+            onBlur={markTouched("billingCycle")}
+            error={shownError("billingCycle")}
+            options={BILLING_CYCLES.map((c) => ({
+              value: c,
+              label: BILLING_CYCLE_LABELS[c],
+            }))}
+          />
+          <DateField
+            id="sf-renewalDate"
+            label="Renewal date"
+            value={values.renewalDate}
+            onChange={setField("renewalDate")}
+            onBlur={markTouched("renewalDate")}
+            error={shownError("renewalDate")}
+            warning={warnings.renewalDate}
+          />
         </div>
       </fieldset>
 
-      <TextareaField
-        id="sf-notes"
-        label="Notes"
-        hint="optional"
-        rows={4}
-        value={values.notes}
-        onChange={setField("notes")}
-        onBlur={markTouched("notes")}
-        error={shownError("notes")}
-        placeholder="Seats, billing owner, cancellation terms…"
-        counter={`${notesLen}/${SERVICE_LIMITS.notes.max}`}
-        counterOver={notesLen > SERVICE_LIMITS.notes.max}
-      />
+      <fieldset className="form-group">
+        <legend className="form-group__legend">Details</legend>
+
+        <fieldset className="field sform__status">
+          <legend className="field__label">Status</legend>
+          <div className="segmented">
+            {SERVICE_STATUSES.map((s) => (
+              <label
+                key={s}
+                className={`segmented__opt${values.status === s ? " is-active" : ""}`}
+              >
+                <input
+                  type="radio"
+                  name="status"
+                  value={s}
+                  checked={values.status === s}
+                  onChange={setField("status")}
+                />
+                {STATUS_LABELS[s]}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <TextareaField
+          id="sf-notes"
+          label="Notes"
+          hint="optional"
+          rows={4}
+          value={values.notes}
+          onChange={setField("notes")}
+          onBlur={markTouched("notes")}
+          error={shownError("notes")}
+          placeholder="Seats, billing owner, cancellation terms…"
+          counter={`${notesLen}/${SERVICE_LIMITS.notes.max}`}
+          counterOver={notesLen > SERVICE_LIMITS.notes.max}
+        />
+      </fieldset>
 
       <div className="form-actions">
         <button type="submit" className="btn btn--primary" disabled={submitting}>

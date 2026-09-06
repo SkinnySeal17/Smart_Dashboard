@@ -11,6 +11,7 @@ export default function Modal({ open, onClose, title, children, actions }) {
   const panelRef = useRef(null);
   const returnFocusRef = useRef(null);
   const titleId = useId();
+  const bodyId = useId();
 
   useEffect(() => {
     if (!open) return undefined;
@@ -69,14 +70,25 @@ export default function Modal({ open, onClose, title, children, actions }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
+        aria-describedby={children ? bodyId : undefined}
         tabIndex={-1}
       >
+        <button
+          type="button"
+          className="modal__close"
+          onClick={onClose}
+          aria-label="Close dialog"
+        >
+          <span aria-hidden="true">✕</span>
+        </button>
         {title && (
           <h2 id={titleId} className="modal__title">
             {title}
           </h2>
         )}
-        <div className="modal__body">{children}</div>
+        <div id={bodyId} className="modal__body">
+          {children}
+        </div>
         {actions && <div className="modal__actions">{actions}</div>}
       </div>
     </div>

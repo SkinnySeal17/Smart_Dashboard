@@ -12,6 +12,17 @@ import { useSettings } from "../context/SettingsContext";
 import { formatMoney, monthlyCost } from "../utils/format";
 import { formatDate, renewalLabel, daysUntil } from "../utils/date";
 
+function greeting(date = new Date()) {
+  const h = date.getHours();
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+function firstName(name) {
+  return (name || "").trim().split(/\s+/)[0] || "there";
+}
+
 const ICON_PROPS = {
   viewBox: "0 0 24 24",
   width: 18,
@@ -79,7 +90,7 @@ function RenewalRows({ items, getCategory }) {
 
 export default function DashboardPage() {
   const { services, loading, error, reload } = useServices();
-  const { categories, getCategory, preferences } = useSettings();
+  const { categories, getCategory, preferences, profile } = useSettings();
 
   const active = services.filter((s) => s.status === "active");
   const inactive = services.length - active.length;
@@ -121,15 +132,18 @@ export default function DashboardPage() {
 
   return (
     <div className="dashboard">
-      <div className="dashboard__header">
+      <div className="welcome">
         <div>
-          <h1>Overview</h1>
-          {!loading && !error && (
-            <p className="dashboard__sub">
-              {services.length} service{services.length === 1 ? "" : "s"} ·{" "}
-              {active.length} active
-            </p>
-          )}
+          <h1 className="welcome__title">
+            {greeting()}, {firstName(profile.name)}! <span aria-hidden="true">👋</span>
+          </h1>
+          <p className="welcome__sub">
+            {!loading && !error
+              ? `Here's what's happening with your services today — ${services.length} service${
+                  services.length === 1 ? "" : "s"
+                }, ${active.length} active.`
+              : "Here's what's happening with your services today."}
+          </p>
         </div>
         <Button as={Link} to="/services/new">
           + Add service
