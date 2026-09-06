@@ -87,9 +87,21 @@ export default function ServiceDetailPage() {
       <PageHeader
         title={service.name}
         back={
-          <Link className="auth__link" to="/services">
-            ← All services
-          </Link>
+          <nav className="breadcrumb" aria-label="Breadcrumb">
+            <ol className="breadcrumb__list">
+              <li>
+                <Link to="/">Dashboard</Link>
+              </li>
+              <li>
+                <Link to="/services">Services</Link>
+              </li>
+              <li>
+                <span className="breadcrumb__current" aria-current="page">
+                  {service.name}
+                </span>
+              </li>
+            </ol>
+          </nav>
         }
         actions={
           <>
@@ -104,7 +116,11 @@ export default function ServiceDetailPage() {
       />
 
       <Card>
-        <dl className="detail-grid">
+        <section aria-labelledby="service-overview-title">
+          <h2 id="service-overview-title" className="detail-section__title">
+            Overview
+          </h2>
+          <dl className="detail-grid">
           <div>
             <dt>Category</dt>
             <dd>
@@ -147,7 +163,8 @@ export default function ServiceDetailPage() {
             <dt>Last updated</dt>
             <dd>{formatDateTime(service.updatedAt)}</dd>
           </div>
-        </dl>
+          </dl>
+        </section>
 
         <RenewalHistory service={service} />
         <ServiceNotes notes={service.notes} />

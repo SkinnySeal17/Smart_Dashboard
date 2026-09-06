@@ -12,6 +12,16 @@ export function useCountUp(target, { duration = 600 } = {}) {
     const from = fromRef.current;
     if (from === target) return undefined;
 
+    // Respect the user's reduced-motion preference: jump straight to the value.
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) {
+      fromRef.current = target;
+      setValue(target);
+      return undefined;
+    }
+
     const start = performance.now();
     let raf = 0;
 
