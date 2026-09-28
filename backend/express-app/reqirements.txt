@@ -1,0 +1,56 @@
+1. Authentication Requirements
+
+The system must:
+
+Allow users to register an account.
+Allow registered users to log in.
+Allow users to log out.
+Provide a /me endpoint to identify the currently authenticated user.
+Protect authenticated endpoints from unauthorised access.
+Store passwords using bcrypt hashing, never plain text.
+Prevent users from accessing another user's account or information.
+2. User & Profile Requirements
+
+The system must allow an authenticated user to:
+
+View their profile.
+Update their profile.
+Change their password.
+Retrieve their own account information.
+Modify only information belonging to their own account.
+3. User Settings Requirements
+
+Each user should have their own UserSettings containing:
+
+Notifications preference
+Theme
+Currency
+Default service status
+Date format
+
+The API must allow users to:
+
+View their settings.
+Update their settings.
+Have their settings persist between sessions.
+4. API & Backend Requirements
+
+The backend must provide a RESTful API supporting:
+
+CRUD operations where appropriate.
+JSON request/response data.
+Input validation.
+Consistent HTTP status codes.
+Error handling.
+Authentication/authorisation middleware.
+Secure communication between frontend and backend.
+
+5. Security requirement 
+Hash passwords using bcrypt.
+Never store plaintext passwords.
+Validate and sanitise incoming data.
+Use parameterised queries or an ORM to prevent SQL injection.
+Authenticate requests before accessing protected resources.
+Authorise users so they can access only their own data.
+Avoid exposing sensitive information in API responses.
+Return appropriate errors without leaking database/server details.
