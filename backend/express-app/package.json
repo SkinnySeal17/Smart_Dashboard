@@ -3,11 +3,20 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
+    "start": "node server.js",
     "db:test": "node src/config/testConnection.js",
-    "users:test": "node src/services/testUserRepository.js"
+    "users:test": "node src/services/testUserRepository.js",
+    "auth:register:test": "node src/routes/testRegister.js",
+    "auth:login:test": "node src/routes/testLogin.js",
+    "auth:middleware:test": "node src/middleware/testAuthenticate.js",
+    "auth:me:test": "node src/routes/testMe.js",
+    "auth:logout:test": "node src/routes/testLogout.js"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "dotenv": "^16.6.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.15.1"
   }
 }
