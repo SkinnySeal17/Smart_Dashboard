@@ -1,8 +1,8 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { loadCategories, createCategory, editCategory, removeCategory } from "../services/categoriesService";
+import { createContext, useContext, useCallback, useEffect, useMemo, useState } from "react";
 import {
   loadSettings,
   saveSettings,
-  makeCategory,
   defaultSettings,
 } from "../services/settingsService";
 import { setDateStyle } from "../utils/date";
@@ -20,10 +20,19 @@ function applyTheme(theme) {
 }
 
 export function SettingsProvider({ children }) {
-  const [state, setState] = useState(loadSettings);
+  const [state, setState] = useState(() => ({ ...loadSettings(), categories: [] }));
 
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState("");
+  const reloadCategories = useCallback(async () => {
+    setCategoriesLoading(true); setCategoriesError("");
+    try { const categories = await loadCategories(); setState(s => ({ ...s, categories })); }
+    catch (err) { setCategoriesError(err.message); }
+    finally { setCategoriesLoading(false); }
+  }, []);
+  useEffect(() => { reloadCategories(); }, [reloadCategories]);
   useEffect(() => {
-    saveSettings(state);
+    saveSettings({ ...state, categories: [] });
   }, [state]);
 
   // Keep the app-wide side effects (theme, date formatting) in sync with prefs.
@@ -37,6 +46,7 @@ export function SettingsProvider({ children }) {
 
   const value = useMemo(
     () => ({
+      categoriesLoading, categoriesError, reloadCategories,
       profile: state.profile,
       categories: state.categories,
       notifications: state.notifications,
@@ -72,33 +82,19 @@ export function SettingsProvider({ children }) {
         setState((s) => ({ ...s, appearance: { ...s.appearance, theme } }));
       },
 
-      addCategory: ({ name, color }) => {
-        const category = makeCategory({ name, color });
-        setState((s) => ({ ...s, categories: [...s.categories, category] }));
+      addCategory: async (data) => {
+        const category = await createCategory(data);
+        setState(s => ({ ...s, categories: [...s.categories, category] }));
         return category;
       },
-
-      updateCategory: (id, patch) => {
-        setState((s) => ({
-          ...s,
-          categories: s.categories.map((c) =>
-            c.id === id
-              ? {
-                  ...c,
-                  ...patch,
-                  name:
-                    typeof patch.name === "string" ? patch.name.trim() : c.name,
-                }
-              : c,
-          ),
-        }));
+      updateCategory: async (id, patch) => {
+        const current = state.categories.find(c => c.id === id);
+        const category = await editCategory(id, { ...current, ...patch });
+        setState(s => ({ ...s, categories: s.categories.map(c => c.id === id ? category : c) }));
       },
-
-      deleteCategory: (id) => {
-        setState((s) => ({
-          ...s,
-          categories: s.categories.filter((c) => c.id !== id),
-        }));
+      deleteCategory: async (id) => {
+        await removeCategory(id);
+        setState(s => ({ ...s, categories: s.categories.filter(c => c.id !== id) }));
       },
 
       updatePreferences: (patch) => {
@@ -106,10 +102,10 @@ export function SettingsProvider({ children }) {
       },
 
       resetSettings: () => {
-        setState(defaultSettings());
+        setState(s => ({ ...defaultSettings(), categories: s.categories }));
       },
     }),
-    [state],
+    [state, categoriesLoading, categoriesError, reloadCategories],
   );
 
   return (

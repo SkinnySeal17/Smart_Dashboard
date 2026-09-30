@@ -28,6 +28,8 @@ export default function ServiceDetailPage() {
   const { getCategory, preferences } = useSettings();
   const flash = useFlash();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   if (loading) {
     return (
@@ -71,13 +73,17 @@ export default function ServiceDetailPage() {
     service.billingCycle === "one_time" ? "" : ` / ${cycleLabel.toLowerCase()}`
   }`;
 
-  function confirmDelete() {
+  async function confirmDelete() {
+    setDeleting(true); setDeleteError("");
+    try {
     const name = service.name;
-    deleteService(service.id);
+    await deleteService(service.id);
     navigate("/services", {
       replace: true,
       state: { flash: `Deleted “${name}”.` },
     });
+    } catch (err) { setDeleteError(err.message); }
+    finally { setDeleting(false); }
   }
 
   return (
@@ -179,13 +185,14 @@ export default function ServiceDetailPage() {
             <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
               Keep service
             </Button>
-            <Button variant="danger" onClick={confirmDelete}>
+            <Button variant="danger" disabled={deleting} onClick={confirmDelete}>
               Delete service
             </Button>
           </>
         }
       >
         <p>
+          {deleteError && <span role="alert">{deleteError}</span>}
           Delete “{service.name}”? It will be removed from your services list.
           This can&rsquo;t be undone.
         </p>

@@ -1,3 +1,4 @@
+import LogoutButton from "./LogoutButton";
 import { NavLink } from "react-router-dom";
 
 const links = [
@@ -23,6 +24,7 @@ export default function MobileTabBar() {
           {l.label}
         </NavLink>
       ))}
+      <LogoutButton className="tabbar__link logout-button" />
     </nav>
   );
 }

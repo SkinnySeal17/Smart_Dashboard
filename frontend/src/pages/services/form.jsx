@@ -13,7 +13,10 @@ export default function ServiceFormPage() {
   const navigate = useNavigate();
   const { getService, createService, updateService, loading, error, reload } =
     useServices();
-  const { preferences } = useSettings();
+  const { preferences, categoriesLoading, categoriesError, reloadCategories } = useSettings();
+
+  if (categoriesLoading) return <Skeleton lines={5} />;
+  if (categoriesError) return <ErrorState message={categoriesError} onRetry={reloadCategories} />;
 
   if (editing && loading) {
     return (
@@ -71,7 +74,7 @@ export default function ServiceFormPage() {
       };
 
   async function handleSubmit(values) {
-    const saved = editing ? updateService(id, values) : createService(values);
+    const saved = await (editing ? updateService(id, values) : createService(values));
     navigate(`/services/${saved.id}`, {
       replace: true,
       state: { flash: editing ? "Changes saved." : "Service created." },

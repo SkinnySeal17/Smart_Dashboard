@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { loadServicesAsync } from "../../services/servicesService";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Card from "../../components/ui/Card";
 import Badge from "../../components/ui/Badge";
@@ -20,29 +21,33 @@ import {
   CYCLE_SUFFIX,
 } from "../../utils/format";
 
-function matchesQuery(service, needle) {
-  if (!needle) return true;
-  return (
-    service.name.toLowerCase().includes(needle) ||
-    (service.notes ?? "").toLowerCase().includes(needle)
-  );
-}
-
 export default function ServicesListPage() {
-  const { services, loading, error, reload } = useServices();
+  const { services } = useServices();
   const { categories, getCategory, preferences } = useSettings();
   const flash = useFlash();
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
-  const rows = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return services.filter((s) => {
-      if (categoryFilter !== "all" && s.category !== categoryFilter) return false;
-      if (!matchesQuery(s, needle)) return false;
-      return true;
-    });
-  }, [services, query, categoryFilter]);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [cycleFilter, setCycleFilter] = useState("all");
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  const reload = () => setAttempt(a => a + 1);
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true); setError("");
+    const timer = setTimeout(async () => {
+      try {
+        const result = await loadServicesAsync({ search: query.trim(), category_id: categoryFilter, status: statusFilter, billing_cycle: cycleFilter }, controller.signal);
+        if (!controller.signal.aborted) setRows(result);
+      } catch (err) {
+        if (!controller.signal.aborted) setError(err.message);
+      } finally { if (!controller.signal.aborted) setLoading(false); }
+    }, 250);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [query, categoryFilter, statusFilter, cycleFilter, attempt, services]);
 
   return (
     <div className="dashboard">
@@ -57,15 +62,8 @@ export default function ServicesListPage() {
         }
       />
 
-      {error ? (
-        <ErrorState message={error} onRetry={reload} />
-      ) : loading ? (
-        <Card title="Loading…">
-          <Skeleton lines={6} />
-        </Card>
-      ) : (
       <Card
-        title={`${rows.length} of ${services.length}`}
+        title={loading ? "Loading services…" : `${rows.length} services`}
         action={
           <div className="list-filters">
             <input
@@ -89,10 +87,17 @@ export default function ServicesListPage() {
                 </option>
               ))}
             </select>
+            <select className="field__input field__input--inline" aria-label="Filter by status" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+              <option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option>
+            </select>
+            <select className="field__input field__input--inline" aria-label="Filter by billing cycle" value={cycleFilter} onChange={e => setCycleFilter(e.target.value)}>
+              <option value="all">All billing cycles</option>
+              {['monthly', 'quarterly', 'yearly', 'one_time'].map(c => <option key={c} value={c}>{billingCycleLabel(c)}</option>)}
+            </select>
           </div>
         }
       >
-        {rows.length === 0 ? (
+        {error ? <ErrorState message={error} onRetry={reload} /> : loading ? <Skeleton lines={6} /> : rows.length === 0 ? (
           <EmptyState>
             No services match.{" "}
             <Link className="auth__link" to="/services/new">
@@ -167,7 +172,6 @@ export default function ServicesListPage() {
           </div>
         )}
       </Card>
-      )}
     </div>
   );
 }

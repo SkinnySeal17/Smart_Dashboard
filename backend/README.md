@@ -125,7 +125,7 @@ Smart_Dashboard/
 
 ---
 
-## Member 2 – Services & Categories
+## Services & Categories
 
 ### Backend
 
@@ -405,7 +405,7 @@ GET /api/dashboard/overdue-renewals
 
 ---
 
-## Member 2 – Services & Categories
+## Services & Categories
 
 ### Completed
 
@@ -450,7 +450,7 @@ git checkout -b feature/member1-auth
 ```
 
 ```bash
-git checkout -b feature/member2-services
+git checkout -b feature/services-categories
 ```
 
 ```bash
@@ -585,7 +585,7 @@ Accounts / Authentication / Settings
           │
           │ JWT authentication
           ▼
-Member 2
+Services & Categories
 Services / Categories
           │
           ▼

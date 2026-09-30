@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useMemo, useRef, useState } from "react";
 import {
   validateService,
@@ -104,9 +105,16 @@ export default function ServiceForm({
           onChange={setField("category")}
           onBlur={markTouched("category")}
           error={shownError("category")}
-          placeholder="Select a category…"
+          placeholder={categories.length ? "Select a category…" : "No categories yet"}
+          disabled={categories.length === 0}
           options={categories.map((c) => ({ value: c.id, label: c.name }))}
         />
+        {categories.length === 0 && (
+          <p role="status">
+            Create a category before adding a service.{' '}
+            <Link className="auth__link" to="/settings#categories">Create a category in Settings</Link>.
+          </p>
+        )}
       </fieldset>
 
       <fieldset className="form-group">
@@ -190,7 +198,7 @@ export default function ServiceForm({
       </fieldset>
 
       <div className="form-actions">
-        <button type="submit" className="btn btn--primary" disabled={submitting}>
+        <button type="submit" className="btn btn--primary" disabled={submitting || categories.length === 0}>
           {submitting ? "Saving…" : submitLabel}
         </button>
         {onCancel && (
