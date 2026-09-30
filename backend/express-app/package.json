@@ -10,7 +10,8 @@
     "auth:login:test": "node src/routes/testLogin.js",
     "auth:middleware:test": "node src/middleware/testAuthenticate.js",
     "auth:me:test": "node src/routes/testMe.js",
-    "auth:logout:test": "node src/routes/testLogout.js"
+    "auth:logout:test": "node src/routes/testLogout.js",
+    "services-categories:test": "node --test test/services-categories.test.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

@@ -1,3 +1,4 @@
+import AuthGate from "./components/AuthGate";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SettingsProvider } from "./context/SettingsContext";
 import { ServicesProvider } from "./context/ServicesContext";
@@ -11,7 +12,7 @@ import ServiceFormPage from "./pages/services/form";
 
 function App() {
   return (
-    <SettingsProvider>
+    <AuthGate><SettingsProvider>
       <ServicesProvider>
         <BrowserRouter>
           <Routes>
@@ -29,7 +30,7 @@ function App() {
           </Routes>
         </BrowserRouter>
       </ServicesProvider>
-    </SettingsProvider>
+    </SettingsProvider></AuthGate>
   );
 }
 
