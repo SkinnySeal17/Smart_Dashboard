@@ -380,9 +380,10 @@ h3 {
 
 .renewal-list__item {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 6px 12px;
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
 }
@@ -392,6 +393,7 @@ h3 {
 }
 
 .renewal-list__name {
+  flex: 1 1 8em;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -400,9 +402,10 @@ h3 {
 
 .renewal-list__meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
+  gap: 6px 10px;
+  min-width: 0;
 }
 
 .renewal-list__date {
@@ -548,6 +551,13 @@ h3 {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 18px;
+}
+
+/* Grid items default to min-width: auto, which lets long rows push the page
+   wider than the screen on phones. */
+.dashboard__row > *,
+.stat-grid > * {
+  min-width: 0;
 }
 
 .stat-grid {
