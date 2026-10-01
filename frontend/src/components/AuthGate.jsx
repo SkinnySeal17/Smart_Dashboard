@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { api, getToken, setToken } from '../services/api';
+import LandingPage from './LandingPage';
 
 export default function AuthGate({ children }) {
   const [token, updateToken] = useState(getToken);
-  const [mode, setMode] = useState('login');
+  const [mode, setMode] = useState('home');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -13,7 +14,7 @@ export default function AuthGate({ children }) {
     const changed = () => {
       const nextToken = getToken();
       if (!nextToken) {
-        setMode('login'); setEmail(''); setError(''); setNotice('');
+        setMode('home'); setEmail(''); setError(''); setNotice('');
       }
       updateToken(nextToken);
     };
@@ -52,9 +53,19 @@ export default function AuthGate({ children }) {
     } finally { setBusy(false); }
   }
 
+  function open(nextMode) {
+    setMode(nextMode); setError(''); setNotice('');
+    window.scrollTo(0, 0);
+  }
+
   if (token) return children;
+  if (mode === 'home') return <LandingPage onSignIn={() => open('login')} onRegister={() => open('register')} />;
   return <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '24px' }}>
     <section className="auth__card" style={{ width: '100%', maxWidth: '460px' }} aria-labelledby="auth-title">
+      <div className="auth__top">
+        <span className="auth__brand"><span className="auth__logo" aria-hidden="true">◆</span>Smart Services</span>
+        <button type="button" className="homelink" disabled={busy} onClick={() => open('home')}>← Home</button>
+      </div>
       <h1 id="auth-title" className="auth__title">{registering ? 'Create your account' : 'Sign in'}</h1>
       <p className="auth__subtitle">{registering ? 'Start managing your services and categories.' : 'Welcome back to your dashboard.'}</p>
       {notice && <p role="status">{notice}</p>}
