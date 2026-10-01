@@ -161,9 +161,6 @@ export default function SettingsPage() {
             <span className="profile-head__email">{profile.email || "—"}</span>
           </span>
         </div>
-        <p className="field__hint">
-          Your name and email come from your account.
-        </p>
       </Card>
 
       {/* ----------------------------- Notifications --------------------- */}
