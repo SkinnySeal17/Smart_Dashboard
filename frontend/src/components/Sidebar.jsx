@@ -1,3 +1,4 @@
+import LogoutButton from "./LogoutButton";
 import { Link, NavLink } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
 
@@ -65,6 +66,7 @@ export default function Sidebar() {
           <span className="sidebar__user-email">{profile.email}</span>
         </span>
       </Link>
+      <LogoutButton className="sidebar__link logout-button" />
     </aside>
   );
 }
