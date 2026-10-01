@@ -20,6 +20,7 @@ import {
   CYCLE_SUFFIX,
 } from "../../utils/format";
 
+<<<<<<< HEAD
 function matchesQuery(service, needle) {
   if (!needle) return true;
   return (
@@ -28,6 +29,8 @@ function matchesQuery(service, needle) {
   );
 }
 
+=======
+>>>>>>> c9b9e816ba3f1684f32ccbe8622e5ab18bf545ae
 export default function ServicesListPage() {
   const { services, loading, error, reload } = useServices();
   const { categories, getCategory, preferences } = useSettings();
@@ -39,7 +42,11 @@ export default function ServicesListPage() {
     const needle = query.trim().toLowerCase();
     return services.filter((s) => {
       if (categoryFilter !== "all" && s.category !== categoryFilter) return false;
+<<<<<<< HEAD
       if (!matchesQuery(s, needle)) return false;
+=======
+      if (needle && !s.name.toLowerCase().includes(needle)) return false;
+>>>>>>> c9b9e816ba3f1684f32ccbe8622e5ab18bf545ae
       return true;
     });
   }, [services, query, categoryFilter]);
@@ -71,10 +78,17 @@ export default function ServicesListPage() {
             <input
               className="field__input field__input--inline"
               type="search"
+<<<<<<< HEAD
               placeholder="Search name or notes…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               aria-label="Search services by name or notes"
+=======
+              placeholder="Search name…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label="Search services by name"
+>>>>>>> c9b9e816ba3f1684f32ccbe8622e5ab18bf545ae
             />
             <select
               className="field__input field__input--inline"
