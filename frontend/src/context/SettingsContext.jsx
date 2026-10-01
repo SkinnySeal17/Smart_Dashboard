@@ -1,4 +1,5 @@
 import { loadCategories, createCategory, editCategory, removeCategory } from "../services/categoriesService";
+import { getCurrentUser } from "../services/authService";
 import { createContext, useContext, useCallback, useEffect, useMemo, useState } from "react";
 import {
   loadSettings,
@@ -31,6 +32,16 @@ export function SettingsProvider({ children }) {
     finally { setCategoriesLoading(false); }
   }, []);
   useEffect(() => { reloadCategories(); }, [reloadCategories]);
+
+  // Profile = the logged-in account (name and email given at registration).
+  const [profile, setProfile] = useState({ name: "", email: "" });
+  useEffect(() => {
+    let cancelled = false;
+    getCurrentUser()
+      .then(user => { if (!cancelled) setProfile({ name: user.name, email: user.email }); })
+      .catch(() => {}); // a 401 already signs the user out in api.js
+    return () => { cancelled = true; };
+  }, []);
   useEffect(() => {
     saveSettings({ ...state, categories: [] });
   }, [state]);
@@ -47,29 +58,13 @@ export function SettingsProvider({ children }) {
   const value = useMemo(
     () => ({
       categoriesLoading, categoriesError, reloadCategories,
-      profile: state.profile,
+      profile,
       categories: state.categories,
       notifications: state.notifications,
       appearance: state.appearance,
       preferences: state.preferences,
 
       getCategory: (id) => state.categories.find((c) => c.id === id) ?? null,
-
-      updateProfile: (patch) => {
-        setState((s) => ({
-          ...s,
-          profile: {
-            ...s.profile,
-            ...patch,
-            ...(typeof patch.name === "string"
-              ? { name: patch.name.trim() }
-              : null),
-            ...(typeof patch.email === "string"
-              ? { email: patch.email.trim() }
-              : null),
-          },
-        }));
-      },
 
       updateNotifications: (patch) => {
         setState((s) => ({
@@ -105,7 +100,7 @@ export function SettingsProvider({ children }) {
         setState(s => ({ ...defaultSettings(), categories: s.categories }));
       },
     }),
-    [state, categoriesLoading, categoriesError, reloadCategories],
+    [state, profile, categoriesLoading, categoriesError, reloadCategories],
   );
 
   return (

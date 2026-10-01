@@ -1,16 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
 import Modal from "../components/ui/Modal";
 import Button from "../components/ui/Button";
 import Flash from "../components/ui/Flash";
 import Toggle from "../components/ui/Toggle";
-import TextField from "../components/forms/TextField";
 import SelectField from "../components/forms/SelectField";
 import { useSettings } from "../context/SettingsContext";
 import { useServices } from "../context/ServicesContext";
 import { validateCategory, CATEGORY_LIMITS } from "../lib/validateService";
-import { validateProfile, PROFILE_LIMITS } from "../lib/validateProfile";
 import { THEMES, DATE_FORMATS, RENEWAL_LEAD_DAYS } from "../services/settingsService";
 
 const PALETTE = [
@@ -49,7 +47,6 @@ export default function SettingsPage() {
     notifications,
     appearance,
     preferences,
-    updateProfile,
     updateNotifications,
     setTheme,
     updatePreferences,
@@ -69,37 +66,6 @@ export default function SettingsPage() {
     flashTimer.current = setTimeout(() => setFlash(""), 3500);
   }
   useEffect(() => () => clearTimeout(flashTimer.current), []);
-
-  // ---- Profile (explicit Save, matching the Service form pattern) ----------
-  const [profileDraft, setProfileDraft] = useState(profile);
-  const [profileTouched, setProfileTouched] = useState({});
-  const [profileSubmitted, setProfileSubmitted] = useState(false);
-
-  // Keep the draft in step if the profile changes elsewhere (e.g. Reset).
-  useEffect(() => {
-    setProfileDraft(profile);
-    setProfileTouched({});
-    setProfileSubmitted(false);
-  }, [profile]);
-
-  const profileErrors = useMemo(
-    () => validateProfile(profileDraft),
-    [profileDraft],
-  );
-  const profileDirty =
-    profileDraft.name !== profile.name || profileDraft.email !== profile.email;
-  const profileFieldError = (field) =>
-    (profileTouched[field] || profileSubmitted) && profileErrors[field]
-      ? profileErrors[field]
-      : "";
-
-  function handleProfileSubmit(e) {
-    e.preventDefault();
-    setProfileSubmitted(true);
-    if (Object.keys(profileErrors).length > 0) return;
-    updateProfile(profileDraft);
-    announce("Profile saved to this browser.");
-  }
 
   // ---- Categories --------------------------------------------------------
   const [newName, setNewName] = useState("");
@@ -195,65 +161,9 @@ export default function SettingsPage() {
             <span className="profile-head__email">{profile.email || "—"}</span>
           </span>
         </div>
-
-        <form className="sform" onSubmit={handleProfileSubmit} noValidate>
-          <div className="sform__row">
-            <TextField
-              id="profile-name"
-              label="Full name"
-              value={profileDraft.name}
-              onChange={(e) =>
-                setProfileDraft((d) => ({ ...d, name: e.target.value }))
-              }
-              onBlur={() =>
-                setProfileTouched((t) => ({ ...t, name: true }))
-              }
-              error={profileFieldError("name")}
-              maxLength={PROFILE_LIMITS.name.max + 10}
-              autoComplete="name"
-            />
-            <TextField
-              id="profile-email"
-              label="Email address"
-              type="email"
-              value={profileDraft.email}
-              onChange={(e) =>
-                setProfileDraft((d) => ({ ...d, email: e.target.value }))
-              }
-              onBlur={() =>
-                setProfileTouched((t) => ({ ...t, email: true }))
-              }
-              error={profileFieldError("email")}
-              maxLength={PROFILE_LIMITS.email.max}
-              autoComplete="email"
-            />
-          </div>
-
-          <div className="form-actions">
-            <button
-              type="submit"
-              className="btn btn--primary"
-              disabled={!profileDirty}
-            >
-              Save profile
-            </button>
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={() => {
-                setProfileDraft(profile);
-                setProfileTouched({});
-                setProfileSubmitted(false);
-              }}
-              disabled={!profileDirty}
-            >
-              Cancel
-            </button>
-            <span className="settings__status" role="status">
-              {profileDirty ? "Unsaved changes" : "All changes saved"}
-            </span>
-          </div>
-        </form>
+        <p className="field__hint">
+          Your name and email come from your account.
+        </p>
       </Card>
 
       {/* ----------------------------- Notifications --------------------- */}
@@ -565,9 +475,9 @@ export default function SettingsPage() {
         }
       >
         <p>
-          This restores the profile, notifications, appearance, preferences and
-          categories to their defaults on this browser. Your services are not
-          affected. This can&rsquo;t be undone.
+          This restores notifications, appearance and preferences to their
+          defaults on this browser. Your account, services and categories are
+          not affected. This can&rsquo;t be undone.
         </p>
       </Modal>
     </div>
