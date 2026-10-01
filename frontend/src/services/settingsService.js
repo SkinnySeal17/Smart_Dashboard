@@ -1,6 +1,7 @@
-// Settings data access (localStorage-backed): profile, categories, notification
+// Settings data access (localStorage-backed): categories, notification
 // preferences, appearance, and app preferences. No backend — everything here is
-// saved to the current browser only.
+// saved to the current browser only. The profile (name, email) comes from the
+// logged-in account via GET /api/auth/me, not from here.
 import { readJSON, writeJSON, uid } from "./storage";
 
 const KEY = "smart-dashboard.settings";
@@ -11,10 +12,6 @@ export const DEFAULT_STATUSES = ["active", "inactive"];
 export const RENEWAL_LEAD_DAYS = [1, 3, 7, 14];
 
 export const DEFAULTS = {
-  profile: {
-    name: "Three idiots",
-    email: "three.idiots@example.com",
-  },
   categories: [
     { id: "cat_web", name: "Web Development", color: "#aa3bff" },
     { id: "cat_design", name: "Design", color: "#3b82f6" },
@@ -41,14 +38,6 @@ export const DEFAULTS = {
 /** Deep-ish clone of the defaults so callers can never mutate the shared object. */
 export function defaultSettings() {
   return JSON.parse(JSON.stringify(DEFAULTS));
-}
-
-function normalizeProfile(stored) {
-  const src = stored && typeof stored === "object" ? stored : {};
-  return {
-    name: typeof src.name === "string" ? src.name : DEFAULTS.profile.name,
-    email: typeof src.email === "string" ? src.email : DEFAULTS.profile.email,
-  };
 }
 
 function normalizeNotifications(stored) {
@@ -105,7 +94,6 @@ export function loadSettings() {
   const stored = readJSON(KEY, null);
   if (!stored || typeof stored !== "object") return defaultSettings();
   return {
-    profile: normalizeProfile(stored.profile),
     categories: normalizeCategories(stored.categories),
     notifications: normalizeNotifications(stored.notifications),
     appearance: normalizeAppearance(stored.appearance),
