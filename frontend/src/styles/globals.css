@@ -380,9 +380,10 @@ h3 {
 
 .renewal-list__item {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 6px 12px;
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
 }
@@ -392,6 +393,7 @@ h3 {
 }
 
 .renewal-list__name {
+  flex: 1 1 8em;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -400,9 +402,10 @@ h3 {
 
 .renewal-list__meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
+  gap: 6px 10px;
+  min-width: 0;
 }
 
 .renewal-list__date {
@@ -452,6 +455,93 @@ h3 {
   margin-top: 14px;
 }
 
+.donut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.donut__figure {
+  position: relative;
+  width: min(180px, 100%);
+  margin: 0;
+}
+
+.donut__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.donut__track,
+.donut__segment {
+  fill: none;
+  stroke-width: 5;
+}
+
+.donut__track {
+  stroke: var(--bg);
+}
+
+.donut__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut__total {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-h);
+  font-variant-numeric: tabular-nums;
+}
+
+.donut__label {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.donut__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.donut__legend-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.donut__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.donut__legend-name {
+  color: var(--text-h);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.donut__legend-value {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
 .dashboard__sub {
   margin: 0;
   font-size: 13px;
@@ -461,6 +551,13 @@ h3 {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 18px;
+}
+
+/* Grid items default to min-width: auto, which lets long rows push the page
+   wider than the screen on phones. */
+.dashboard__row > *,
+.stat-grid > * {
+  min-width: 0;
 }
 
 .stat-grid {

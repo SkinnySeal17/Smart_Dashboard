@@ -1,4 +1,11 @@
-# Smart Dashboard
+# Smart Dashboard — Backend (Express + Node.js)
+
+REST API for the Smart Dashboard frontend. Express 5, MongoDB via Mongoose, ES modules.
+
+## Requirements
+
+- Node.js **22.9+** (uses built-in `--env-file` and `--watch`, so no `dotenv` / `nodemon`)
+- MongoDB running locally, or a MongoDB Atlas connection string
 
 A web-based Smart Dashboard for managing services, categories, user accounts, settings, and subscription/service analytics.
 
@@ -479,132 +486,93 @@ git diff
 ```
 
 ```bash
-git diff --cached
+cd backend
+npm install
+copy .env.example .env      # macOS/Linux: cp .env.example .env
+npm run dev                 # http://localhost:5000  (auto-restarts on change)
 ```
 
-```bash
-git add <files>
-```
+Check it works: `GET http://localhost:5000/api/health` → `{ "status": "ok" }`
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | start with file watching |
+| `npm start` | start without watching |
+| `npm test` | run tests in `tests/` (Node test runner + supertest) |
+
+## Environment variables (`.env`)
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `PORT` | `5000` | API port |
+| `NODE_ENV` | `development` | `development` shows error stacks in responses |
+| `MONGODB_URI` | `mongodb://127.0.0.1:27017/smart_dashboard` | database connection |
+| `CORS_ORIGIN` | `http://localhost:5173` | comma-separated allowed frontend origins |
+
+## Structure
 
 ```bash
 git commit -m "feat: description"
 ```
-
----
-
-# Environment Variables
-
-Create a local `.env` file inside:
-
-```text
-backend/express-app/.env
+backend/
+├── src/
+│   ├── server.js            # connects to MongoDB, starts the server
+│   ├── app.js               # Express app: middleware + route mounting
+│   ├── config/              # env.js, db.js
+│   ├── middleware/          # notFound, errorHandler (shared)
+│   └── modules/
+│       ├── accounts/        # Member 1
+│       ├── services/        # Member 2
+│       └── dashboard/       # Member 3
+├── tests/
+├── .env.example
+└── package.json
 ```
 
-Example:
+Each module's router is already mounted in `src/app.js`:
 
-```env
-PORT=
-DB_HOST=
-DB_PORT=
-DB_USER=
-DB_PASSWORD=
-DB_NAME=
-JWT_SECRET=
-```
+| Module | URL prefix |
+|---|---|
+| accounts | `/api/accounts` |
+| services | `/api/services` |
+| dashboard | `/api/dashboard` |
 
-The real `.env` file must **not** be committed.
-
-A safe template is provided as:
-
-```text
-backend/express-app/.env.example
-```
-
-Team members should create their own local `.env` using their own MySQL credentials and JWT secret.
-
----
-
-# Database Setup
-
-Each developer should use their own local MySQL database.
-
-The database schema is shared through:
-
-```text
-backend/database/schema.sql
-```
-
-Example setup:
-
-```text
-1. Start MySQL through XAMPP
-2. Open phpMyAdmin
-3. Run schema.sql
-4. Create/configure local .env
-5. Install backend dependencies
-6. Start Express
-```
-
-Install dependencies:
-
-```bash
-cd backend/express-app
-npm install
-```
-
-Start the backend using the project's configured npm script.
-
----
-
-# Security Requirements
-
-The application should:
-
-* Hash passwords using bcrypt.
-* Never store plaintext passwords.
-* Never return `password_hash` through the API.
-* Store JWT secrets in environment variables.
-* Use parameterized SQL queries.
-* Validate user input.
-* Protect private endpoints with authentication middleware.
-* Use the authenticated user's ID when accessing personal data.
-* Avoid exposing raw database errors.
-* Avoid logging passwords or secrets.
-* Use HTTPS in production.
-* Consider rate limiting for authentication endpoints.
-
----
-
-# Development Principle
-
-The backend is divided by responsibility rather than Django-specific modules.
-
-```text
-Member 1
-Accounts / Authentication / Settings
-          │
-          │ JWT authentication
-          ▼
-Services & Categories
-Services / Categories
-          │
-          ▼
-Member 3
-Dashboard / Analytics
-```
-
-Member 1's authentication middleware provides the common authentication layer used by protected endpoints across the project.
-
----
+Inside your module, use this naming: `<name>.routes.js`, `<name>.controller.js`, `<name>.model.js`
+(and `<name>.middleware.js` if needed). Tests go in `tests/<module>.test.js`.
 
 # Project Status
 
-**Backend migration:** Django → Express.js/Node.js
+Each member writes tests for their own endpoints and connects their part of the frontend to the API.
 
-**Database:** MySQL
+**Member 1 — `modules/accounts` (auth + user settings)**
+- `User` model (name, email, hashed password)
+- JWT auth: register, login, `me` endpoint
+- `requireAuth` middleware that sets `req.user`. Export it so the other modules can protect their routes
+- Profile: view/update name + email, change password
+- `UserSettings` (one per user): notifications, theme, currency, default status, date format
+- Settings endpoint (GET / PATCH) with defaults matching `frontend/src/services/settingsService.js`
+- Frontend: login page + `settingsService.js` → API
 
-**Frontend:** React/Vite
+**Member 2 — `modules/services` (core data)**
+- `Category` model (name, color, owner) + CRUD, with duplicate-name and "in use" delete guards
+- `Service` model (name, category, cost, billingCycle, renewalDate, status, notes, owner, timestamps) + CRUD
+- Validation matching `frontend/src/lib/validateService.js`
+- Search by name, filter by category/status; users only see their own records
+- Frontend: `servicesService.js` → API
 
-**Authentication:** JWT + bcrypt
+**Member 3 — `modules/dashboard` (stats + data)**
+- Summary endpoint: service count, monthly spend, yearly estimate, next renewal
+- Spend-by-category endpoint (for the category chart)
+- Upcoming renewals + overdue services endpoint
+- Seed script (`npm run seed`) loading `frontend/src/data/services.json`
+- Shared frontend API client (base URL from env, auth token header, error handling)
+- Frontend: dashboard page → API
 
-**Current focus:** Completing Member 1 authentication API before implementing the frontend authentication flow.
+**Order:** Member 2 pushes the `Category` + `Service` models first (Member 3 queries them).
+Member 1 pushes `requireAuth` early so everyone can lock endpoints to the logged-in user.
+
+## Ground rules
+- Work only inside your own `modules/<name>/` folder. Ask before editing `app.js`, `config/` or `middleware/`.
+- Install packages from `backend/` with `npm install <pkg>`, and commit both `package.json` and `package-lock.json`.
+- Never commit `.env`. Add new variables to `.env.example` instead.
+- API field names use the frontend's camelCase shape (`billingCycle`, `renewalDate`, …).
