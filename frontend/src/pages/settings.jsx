@@ -45,7 +45,7 @@ function initials(name) {
 export default function SettingsPage() {
   const {
     profile,
-    categories,
+    categories, categoriesLoading, categoriesError, reloadCategories,
     notifications,
     appearance,
     preferences,
@@ -113,14 +113,15 @@ export default function SettingsPage() {
   const [pendingDelete, setPendingDelete] = useState(null);
   const [resetOpen, setResetOpen] = useState(false);
 
-  function handleAdd(e) {
+  async function handleAdd(e) {
     e.preventDefault();
     const errors = validateCategory({ name: newName }, { categories });
     if (errors.name) {
       setNewError(errors.name);
       return;
     }
-    addCategory({ name: newName, color: newColor });
+    try { await addCategory({ name: newName, color: newColor }); }
+    catch (err) { setNewError(err.message); return; }
     setNewName("");
     setNewColor(PALETTE[0]);
     setNewError("");
@@ -133,7 +134,7 @@ export default function SettingsPage() {
     setEditError("");
   }
 
-  function saveEdit(id) {
+  async function saveEdit(id) {
     const errors = validateCategory(
       { name: editName },
       { categories, currentId: id },
@@ -142,15 +143,17 @@ export default function SettingsPage() {
       setEditError(errors.name);
       return;
     }
-    updateCategory(id, { name: editName });
+    try { await updateCategory(id, { name: editName }); }
+    catch (err) { setEditError(err.message); return; }
     setEditingId(null);
     setEditError("");
     announce("Category renamed.");
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (pendingDelete) {
-      deleteCategory(pendingDelete.id);
+      try { await deleteCategory(pendingDelete.id); }
+      catch (err) { announce(err.message); setPendingDelete(null); return; }
       announce("Category deleted.");
     }
     setPendingDelete(null);
@@ -164,6 +167,8 @@ export default function SettingsPage() {
 
   return (
     <div className="page-narrow settings">
+      {categoriesLoading && <p role="status">Loading categories…</p>}
+      {categoriesError && <p role="alert">{categoriesError} <button onClick={reloadCategories}>Retry</button></p>}
       <PageHeader
         title="Settings"
         actions={
@@ -404,6 +409,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* ------------------------------ Categories -------------------- */}
+      <div id="categories" />
       <Card title="Categories">
         <ul className="cat-list">
           {categories.map((cat) => {
