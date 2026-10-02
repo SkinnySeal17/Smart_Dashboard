@@ -5,7 +5,7 @@ const { registerUser } = require("../services/authService");
 const { findUserByEmail } = require("../services/userRepository");
 const { findSettingsByUserId } = require("../services/userSettingsRepository");
 
-const password = "register-test-88";
+const password = "Register-test-88";
 
 function assert(condition, message) {
   if (!condition) {
@@ -100,10 +100,12 @@ async function testRegister() {
 
     const settings = await findSettingsByUserId(stored.id);
     assert(settings, "default settings were not created");
-    assert(
-      settings.notifications === 1 || settings.notifications === true,
-      "notifications default mismatch",
-    );
+    const isOn = (value) => value === 1 || value === true;
+    assert(isOn(settings.email_notifications), "email notifications default mismatch");
+    assert(isOn(settings.renewal_reminders), "renewal reminders default mismatch");
+    assert(settings.renewal_lead_days === 7, "renewal lead days default mismatch");
+    assert(isOn(settings.overdue_alerts), "overdue alerts default mismatch");
+    assert(isOn(settings.weekly_summary), "weekly summary default mismatch");
     assert(settings.theme === "light", "theme default mismatch");
     assert(settings.currency === "AUD", "currency default mismatch");
     assert(settings.default_status === "active", "default status mismatch");

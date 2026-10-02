@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
@@ -23,15 +24,17 @@ const PALETTE = [
 ];
 
 const THEME_LABELS = { light: "Light", dark: "Dark", system: "System" };
-const DATE_FORMAT_LABELS = { short: "Short", medium: "Medium", long: "Long" };
-const SAMPLE_DATE = new Date(2027, 0, 2); // 2 Jan 2027, for the live preview
+const DATE_FORMAT_LABELS = {
+  "DD/MM/YYYY": "Day/Month/Year",
+  "MM/DD/YYYY": "Month/Day/Year",
+  "YYYY-MM-DD": "Year-Month-Day",
+};
 
-function dateSample(style) {
-  try {
-    return SAMPLE_DATE.toLocaleDateString("en-US", { dateStyle: style });
-  } catch {
-    return "";
-  }
+function dateSample(format) {
+  if (format === "MM/DD/YYYY") return "01/02/2027";
+  if (format === "YYYY-MM-DD") return "2027-01-02";
+  if (format === "DD/MM/YYYY") return "02/01/2027";
+  return format;
 }
 
 function initials(name) {
@@ -54,6 +57,9 @@ export default function SettingsPage() {
     updateCategory,
     deleteCategory,
     resetSettings,
+    settingsLoading,
+    settingsError,
+    reloadSettings,
   } = useSettings();
   const { countByCategory } = useServices();
 
@@ -77,6 +83,10 @@ export default function SettingsPage() {
   const [editError, setEditError] = useState("");
 
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [currencyDraft, setCurrencyDraft] = useState(preferences.currency);
+  useEffect(() => {
+    setCurrencyDraft(preferences.currency);
+  }, [preferences.currency]);
   const [resetOpen, setResetOpen] = useState(false);
 
   async function handleAdd(e) {
@@ -125,14 +135,34 @@ export default function SettingsPage() {
     setPendingDelete(null);
   }
 
-  function confirmReset() {
-    resetSettings();
-    setResetOpen(false);
-    announce("All settings restored to defaults.");
+  async function savePreference(action, message) {
+    try {
+      await action();
+      announce(message);
+    } catch (err) {
+      announce(err.message);
+    }
+  }
+
+  async function confirmReset() {
+    try {
+      await resetSettings();
+      setResetOpen(false);
+      announce("Settings restored to defaults.");
+    } catch (err) {
+      setResetOpen(false);
+      announce(err.message);
+    }
   }
 
   return (
     <div className="page-narrow settings">
+      {settingsLoading && <p role="status">Loading settings…</p>}
+      {settingsError && (
+        <p role="alert">
+          {settingsError} <button type="button" onClick={reloadSettings}>Retry</button>
+        </p>
+      )}
       {categoriesLoading && <p role="status">Loading categories…</p>}
       {categoriesError && <p role="alert">{categoriesError} <button onClick={reloadCategories}>Retry</button></p>}
       <PageHeader
@@ -161,6 +191,7 @@ export default function SettingsPage() {
             <span className="profile-head__email">{profile.email || "—"}</span>
           </span>
         </div>
+        <Link className="auth__link" to="/profile">Edit profile or password</Link>
       </Card>
 
       {/* ----------------------------- Notifications --------------------- */}
@@ -174,8 +205,10 @@ export default function SettingsPage() {
             label="Email notifications"
             checked={notifications.email}
             onChange={(v) => {
-              updateNotifications({ email: v });
-              announce(v ? "Email notifications on." : "Email notifications off.");
+              savePreference(
+                () => updateNotifications({ email: v }),
+                v ? "Email notifications on." : "Email notifications off.",
+              );
             }}
           />
           <Toggle
@@ -184,8 +217,10 @@ export default function SettingsPage() {
             checked={notifications.renewalReminders}
             disabled={!notifications.email}
             onChange={(v) => {
-              updateNotifications({ renewalReminders: v });
-              announce("Notification preference saved.");
+              savePreference(
+                () => updateNotifications({ renewalReminders: v }),
+                "Notification preference saved.",
+              );
             }}
           />
 
@@ -196,10 +231,10 @@ export default function SettingsPage() {
                 label="Remind me this many days before renewal"
                 value={String(notifications.renewalLeadDays)}
                 onChange={(e) => {
-                  updateNotifications({
-                    renewalLeadDays: Number(e.target.value),
-                  });
-                  announce("Reminder timing saved.");
+                  savePreference(
+                    () => updateNotifications({ renewalLeadDays: Number(e.target.value) }),
+                    "Reminder timing saved.",
+                  );
                 }}
                 options={RENEWAL_LEAD_DAYS.map((d) => ({
                   value: String(d),
@@ -215,8 +250,10 @@ export default function SettingsPage() {
             checked={notifications.overdueAlerts}
             disabled={!notifications.email}
             onChange={(v) => {
-              updateNotifications({ overdueAlerts: v });
-              announce("Notification preference saved.");
+              savePreference(
+                () => updateNotifications({ overdueAlerts: v }),
+                "Notification preference saved.",
+              );
             }}
           />
           <Toggle
@@ -225,8 +262,10 @@ export default function SettingsPage() {
             checked={notifications.weeklySummary}
             disabled={!notifications.email} 
             onChange={(v) => {
-              updateNotifications({ weeklySummary: v });
-              announce("Notification preference saved.");
+              savePreference(
+                () => updateNotifications({ weeklySummary: v }),
+                "Notification preference saved.",
+              );
             }}
           />
         </div>
@@ -250,8 +289,10 @@ export default function SettingsPage() {
                   value={t}
                   checked={appearance.theme === t}
                   onChange={() => {
-                    setTheme(t);
-                    announce(`Theme set to ${THEME_LABELS[t]}.`);
+                    savePreference(
+                      () => setTheme(t),
+                      `Theme set to ${THEME_LABELS[t]}.`,
+                    );
                   }}
                 />
                 {THEME_LABELS[t]}
@@ -266,18 +307,22 @@ export default function SettingsPage() {
         <div className="sform__row sform__row--3">
           <div className="field">
             <label className="field__label" htmlFor="pref-currency">
-              Currency symbol
+              Currency
             </label>
             <input
               id="pref-currency"
               className="field__input"
-              value={preferences.currency}
-              maxLength={3}
+              value={currencyDraft}
+              maxLength={10}
               aria-describedby="pref-currency-hint"
-              onChange={(e) =>
-                updatePreferences({ currency: e.target.value })
-              }
-              onBlur={() => announce("Preference saved.")}
+              onChange={(e) => setCurrencyDraft(e.target.value)}
+              onBlur={() => {
+                if (currencyDraft === preferences.currency) return;
+                savePreference(
+                  () => updatePreferences({ currency: currencyDraft }),
+                  "Preference saved.",
+                );
+              }}
             />
             <span id="pref-currency-hint" className="field__hint">
             </span>
@@ -288,8 +333,10 @@ export default function SettingsPage() {
             label="Default status for new services"
             value={preferences.defaultStatus}
             onChange={(e) => {
-              updatePreferences({ defaultStatus: e.target.value });
-              announce("Preference saved.");
+              savePreference(
+                () => updatePreferences({ defaultStatus: e.target.value }),
+                "Preference saved.",
+              );
             }}
             options={[
               { value: "active", label: "Active" },
@@ -302,8 +349,10 @@ export default function SettingsPage() {
             label="Date format"
             value={preferences.dateFormat}
             onChange={(e) => {
-              updatePreferences({ dateFormat: e.target.value });
-              announce("Preference saved.");
+              savePreference(
+                () => updatePreferences({ dateFormat: e.target.value }),
+                "Preference saved.",
+              );
             }}
             options={DATE_FORMATS.map((f) => ({
               value: f,
@@ -473,8 +522,7 @@ export default function SettingsPage() {
       >
         <p>
           This restores notifications, appearance and preferences to their
-          defaults on this browser. Your account, services and categories are
-          not affected. This can&rsquo;t be undone.
+          account defaults. Your services and categories are not affected.
         </p>
       </Modal>
     </div>

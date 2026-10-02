@@ -1,4 +1,4 @@
-// Public home page shown to signed-out visitors (AuthGate renders it).
+import { Link } from "react-router-dom";
 // The preview figures below are illustrative sample data, not a real account.
 
 const ICON_PROPS = {
@@ -108,7 +108,7 @@ function DashboardPreview() {
           <span className="landing-preview__label">Upcoming renewals</span>
           <div className="landing-preview__item">
             <span>Website hosting</span>
-            <span>in 2 days</span>
+            <span className="landing-preview__soon">in 2 days</span>
           </div>
           <div className="landing-preview__item">
             <span>Design tools</span>
@@ -120,7 +120,7 @@ function DashboardPreview() {
   );
 }
 
-export default function LandingPage({ onSignIn, onRegister }) {
+export default function LandingPage() {
   return (
     <div className="landing">
       <header className="landing__nav">
@@ -129,12 +129,12 @@ export default function LandingPage({ onSignIn, onRegister }) {
           Smart Services
         </span>
         <nav className="landing__nav-actions" aria-label="Account">
-          <button type="button" className="btn btn--ghost" onClick={onSignIn}>
+          <Link className="btn btn--ghost" to="/login">
             Sign in
-          </button>
-          <button type="button" className="btn btn--primary" onClick={onRegister}>
+          </Link>
+          <Link className="btn btn--primary" to="/register">
             Get started
-          </button>
+          </Link>
         </nav>
       </header>
 
@@ -151,12 +151,12 @@ export default function LandingPage({ onSignIn, onRegister }) {
               reminders before anything renews.
             </p>
             <div className="landing__cta">
-              <button type="button" className="btn btn--primary landing__btn-lg" onClick={onRegister}>
+              <Link className="btn btn--primary landing__btn-lg" to="/register">
                 Create a free account
-              </button>
-              <button type="button" className="btn btn--ghost landing__btn-lg" onClick={onSignIn}>
+              </Link>
+              <Link className="btn btn--ghost landing__btn-lg" to="/login">
                 Sign in
-              </button>
+              </Link>
             </div>
           </div>
           <DashboardPreview />
@@ -192,9 +192,9 @@ export default function LandingPage({ onSignIn, onRegister }) {
 
         <section className="landing__band" aria-labelledby="band-title">
           <h2 id="band-title">Ready to take control of your subscriptions?</h2>
-          <button type="button" className="btn btn--primary landing__btn-lg" onClick={onRegister}>
+          <Link className="btn btn--primary landing__btn-lg" to="/register">
             Create a free account
-          </button>
+          </Link>
         </section>
       </main>
 

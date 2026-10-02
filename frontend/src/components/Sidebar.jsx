@@ -5,6 +5,7 @@ import { useSettings } from "../context/SettingsContext";
 const links = [
   { to: "/", label: "Dashboard", end: true },
   { to: "/services", label: "Services" },
+  { to: "/profile", label: "Profile" },
   { to: "/settings", label: "Settings" },
   { to: "/about", label: "About" },
 ];
@@ -52,7 +53,7 @@ export default function Sidebar() {
       <div className="sidebar__spacer" />
 
       <Link
-        to="/settings"
+        to="/profile"
         className="sidebar__user"
         aria-label="Open profile settings"
       >

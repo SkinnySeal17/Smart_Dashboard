@@ -3,7 +3,7 @@ const app = require("../app");
 const pool = require("../config/db");
 const { registerUser } = require("../services/authService");
 
-const password = "me-test-88";
+const password = "Me-test-88";
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);

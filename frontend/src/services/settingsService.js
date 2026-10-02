@@ -1,114 +1,96 @@
-// Settings data access (localStorage-backed): categories, notification
-// preferences, appearance, and app preferences. No backend — everything here is
-// saved to the current browser only. The profile (name, email) comes from the
-// logged-in account via GET /api/auth/me, not from here.
-import { readJSON, writeJSON, uid } from "./storage";
-
-const KEY = "smart-dashboard.settings";
+import { api } from "./api";
 
 export const THEMES = ["light", "dark", "system"];
-export const DATE_FORMATS = ["short", "medium", "long"];
+export const DATE_FORMATS = ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"];
 export const DEFAULT_STATUSES = ["active", "inactive"];
 export const RENEWAL_LEAD_DAYS = [1, 3, 7, 14];
 
 export const DEFAULTS = {
-  categories: [
-    { id: "cat_web", name: "Web Development", color: "#aa3bff" },
-    { id: "cat_design", name: "Design", color: "#3b82f6" },
-    { id: "cat_consulting", name: "Consulting", color: "#16a34a" },
-    { id: "cat_support", name: "Support", color: "#d97706" },
-  ],
   notifications: {
     email: true,
     renewalReminders: true,
     renewalLeadDays: 7,
     overdueAlerts: true,
-    weeklySummary: false,
+    weeklySummary: true,
   },
   appearance: {
-    theme: "system",
+    theme: "light",
   },
   preferences: {
-    currency: "$",
+    currency: "AUD",
     defaultStatus: "active",
-    dateFormat: "medium",
+    dateFormat: "DD/MM/YYYY",
   },
 };
 
-/** Deep-ish clone of the defaults so callers can never mutate the shared object. */
-export function defaultSettings() {
-  return JSON.parse(JSON.stringify(DEFAULTS));
-}
-
-function normalizeNotifications(stored) {
-  const src = stored && typeof stored === "object" ? stored : {};
-  const bool = (v, fallback) => (typeof v === "boolean" ? v : fallback);
+export function fromApiSettings(row) {
   return {
-    email: bool(src.email, DEFAULTS.notifications.email),
-    renewalReminders: bool(
-      src.renewalReminders,
-      DEFAULTS.notifications.renewalReminders,
-    ),
-    renewalLeadDays: RENEWAL_LEAD_DAYS.includes(src.renewalLeadDays)
-      ? src.renewalLeadDays
-      : DEFAULTS.notifications.renewalLeadDays,
-    overdueAlerts: bool(src.overdueAlerts, DEFAULTS.notifications.overdueAlerts),
-    weeklySummary: bool(src.weeklySummary, DEFAULTS.notifications.weeklySummary),
+    notifications: {
+      email: Boolean(row.email_notifications),
+      renewalReminders: Boolean(row.renewal_reminders),
+      renewalLeadDays: Number(row.renewal_lead_days),
+      overdueAlerts: Boolean(row.overdue_alerts),
+      weeklySummary: Boolean(row.weekly_summary),
+    },
+    appearance: {
+      theme: THEMES.includes(row.theme) ? row.theme : DEFAULTS.appearance.theme,
+    },
+    preferences: {
+      currency: row.currency || DEFAULTS.preferences.currency,
+      defaultStatus: DEFAULT_STATUSES.includes(row.default_status)
+        ? row.default_status
+        : DEFAULTS.preferences.defaultStatus,
+      dateFormat: row.date_format || DEFAULTS.preferences.dateFormat,
+    },
   };
 }
 
-function normalizeAppearance(stored) {
-  const theme = stored && THEMES.includes(stored.theme) ? stored.theme : "system";
-  return { theme };
-}
-
-function normalizePreferences(stored) {
-  const src = stored && typeof stored === "object" ? stored : {};
-  return {
-    currency:
-      typeof src.currency === "string" && src.currency.trim()
-        ? src.currency.slice(0, 3)
-        : DEFAULTS.preferences.currency,
-    defaultStatus: DEFAULT_STATUSES.includes(src.defaultStatus)
-      ? src.defaultStatus
-      : DEFAULTS.preferences.defaultStatus,
-    dateFormat: DATE_FORMATS.includes(src.dateFormat)
-      ? src.dateFormat
-      : DEFAULTS.preferences.dateFormat,
+function toApiSettings(patch) {
+  const body = {};
+  const fields = {
+    email: "email_notifications",
+    renewalReminders: "renewal_reminders",
+    renewalLeadDays: "renewal_lead_days",
+    overdueAlerts: "overdue_alerts",
+    weeklySummary: "weekly_summary",
+    theme: "theme",
+    currency: "currency",
+    defaultStatus: "default_status",
+    dateFormat: "date_format",
   };
+  for (const [key, column] of Object.entries(fields)) {
+    if (patch[key] !== undefined) body[column] = patch[key];
+  }
+  return body;
 }
 
-function normalizeCategories(stored) {
-  if (!Array.isArray(stored)) return defaultSettings().categories;
-  const clean = stored.filter(
-    (c) => c && typeof c.id === "string" && typeof c.name === "string",
-  );
-  return clean.length ? clean : defaultSettings().categories;
+export async function loadAccountSettings() {
+  const { settings } = await api("/settings");
+  return fromApiSettings(settings);
 }
 
-/**
- * Load settings from storage, merging each section over the defaults and
- * discarding anything malformed so a corrupted value can't crash the app.
- */
-export function loadSettings() {
-  const stored = readJSON(KEY, null);
-  if (!stored || typeof stored !== "object") return defaultSettings();
-  return {
-    categories: normalizeCategories(stored.categories),
-    notifications: normalizeNotifications(stored.notifications),
-    appearance: normalizeAppearance(stored.appearance),
-    preferences: normalizePreferences(stored.preferences),
-  };
+export async function saveAccountSettings(patch) {
+  const { settings } = await api("/settings", {
+    method: "PUT",
+    body: toApiSettings(patch),
+  });
+  return fromApiSettings(settings);
 }
 
-export function saveSettings(state) {
-  writeJSON(KEY, state);
-}
-
-export function makeCategory({ name, color }) {
-  return {
-    id: uid("cat"),
-    name: name.trim(),
-    color: color || "#8b8b8b",
-  };
+export async function resetAccountSettings() {
+  const { settings } = await api("/settings", {
+    method: "PUT",
+    body: {
+      email_notifications: DEFAULTS.notifications.email,
+      renewal_reminders: DEFAULTS.notifications.renewalReminders,
+      renewal_lead_days: DEFAULTS.notifications.renewalLeadDays,
+      overdue_alerts: DEFAULTS.notifications.overdueAlerts,
+      weekly_summary: DEFAULTS.notifications.weeklySummary,
+      theme: DEFAULTS.appearance.theme,
+      currency: DEFAULTS.preferences.currency,
+      default_status: DEFAULTS.preferences.defaultStatus,
+      date_format: DEFAULTS.preferences.dateFormat,
+    },
+  });
+  return fromApiSettings(settings);
 }

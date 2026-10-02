@@ -98,22 +98,33 @@ export default function ServiceForm({
           autoComplete="off"
         />
 
-        <SelectField
-          id="sf-category"
-          label="Category"
-          value={values.category}
-          onChange={setField("category")}
-          onBlur={markTouched("category")}
-          error={shownError("category")}
-          placeholder={categories.length ? "Select a category…" : "No categories yet"}
-          disabled={categories.length === 0}
-          options={categories.map((c) => ({ value: c.id, label: c.name }))}
-        />
-        {categories.length === 0 && (
-          <p role="status">
-            Create a category before adding a service.{' '}
-            <Link className="auth__link" to="/settings#categories">Create a category in Settings</Link>.
-          </p>
+        {categories.length > 0 ? (
+          <>
+            <SelectField
+              id="sf-category"
+              label="Category"
+              value={values.category}
+              onChange={setField("category")}
+              onBlur={markTouched("category")}
+              error={shownError("category")}
+              placeholder="Select a category…"
+              options={categories.map((c) => ({ value: c.id, label: c.name }))}
+            />
+            <p className="field__hint">
+              Need a new category? Create one in{" "}
+              <Link className="auth__link" to="/settings">Settings</Link>.
+            </p>
+          </>
+        ) : (
+          <div className="field">
+            <span className="field__label">Category</span>
+            <p className="field__hint" role="status">
+              You don&apos;t have any categories yet.
+            </p>
+            <Link className="auth__link" to="/settings">
+              Create a category in Settings
+            </Link>
+          </div>
         )}
       </fieldset>
 

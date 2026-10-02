@@ -16,22 +16,41 @@ CREATE TABLE IF NOT EXISTS users (
         ON UPDATE CURRENT_TIMESTAMP
 );
 
--- =========================
--- User Settings
--- =========================
+-- =========================================================
+-- USER SETTINGS
+-- =========================================================
 
 CREATE TABLE IF NOT EXISTS user_settings (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
     user_id INT UNSIGNED NOT NULL UNIQUE,
-    notifications BOOLEAN NOT NULL DEFAULT TRUE,
+
+    -- Notification preferences
+    email_notifications BOOLEAN NOT NULL DEFAULT TRUE,
+
+    renewal_reminders BOOLEAN NOT NULL DEFAULT TRUE,
+
+    renewal_lead_days INT UNSIGNED NOT NULL DEFAULT 7,
+
+    overdue_alerts BOOLEAN NOT NULL DEFAULT TRUE,
+
+    weekly_summary BOOLEAN NOT NULL DEFAULT TRUE,
+
+    -- Display preferences
     theme VARCHAR(20) NOT NULL DEFAULT 'light',
+
     currency VARCHAR(10) NOT NULL DEFAULT 'AUD',
+
     default_status VARCHAR(20) NOT NULL DEFAULT 'active',
+
     date_format VARCHAR(30) NOT NULL DEFAULT 'DD/MM/YYYY',
+
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
 
+    -- One settings record belongs to one user
     CONSTRAINT fk_user_settings_user
         FOREIGN KEY (user_id)
         REFERENCES users(id)

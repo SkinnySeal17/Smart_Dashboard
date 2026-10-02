@@ -2208,8 +2208,13 @@ button.homelink {
   color: var(--text);
 }
 
-.landing-preview__item .landing-preview__warn {
+.landing-preview__item span.landing-preview__soon {
   color: var(--warn);
+  font-weight: 600;
+}
+
+.landing-preview__item span.landing-preview__warn {
+  color: var(--danger);
   font-weight: 600;
 }
 

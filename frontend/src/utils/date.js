@@ -1,20 +1,37 @@
 // Date formatting helpers for rendering renewal dates. UI-only, no validation here.
 
 export const DATE_STYLES = ["short", "medium", "long"];
+const DATE_PATTERNS = ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"];
 
 // Module-level default date style. Kept in sync with the user's saved preference
 // by SettingsContext (setDateStyle). Defaults to "medium" so callers that don't
 // pass explicit options behave exactly as before until a preference is applied.
 let currentDateStyle = "medium";
 
+function pad(value) {
+  return String(value).padStart(2, "0");
+}
+
+function formatPattern(date, pattern) {
+  const day = pad(date.getDate());
+  const month = pad(date.getMonth() + 1);
+  const year = date.getFullYear();
+  if (pattern === "MM/DD/YYYY") return `${month}/${day}/${year}`;
+  if (pattern === "YYYY-MM-DD") return `${year}-${month}-${day}`;
+  return `${day}/${month}/${year}`;
+}
+
 export function setDateStyle(style) {
-  currentDateStyle = DATE_STYLES.includes(style) ? style : "medium";
+  currentDateStyle =
+    DATE_STYLES.includes(style) || DATE_PATTERNS.includes(style) ? style : "medium";
 }
 
 export function formatDate(iso, opts) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return String(iso ?? "");
-  return d.toLocaleDateString("en-US", opts ?? { dateStyle: currentDateStyle });
+  if (opts) return d.toLocaleDateString("en-US", opts);
+  if (DATE_PATTERNS.includes(currentDateStyle)) return formatPattern(d, currentDateStyle);
+  return d.toLocaleDateString("en-US", { dateStyle: currentDateStyle });
 }
 
 export function formatDateTime(iso) {

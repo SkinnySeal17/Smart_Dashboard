@@ -11,6 +11,8 @@
     "auth:middleware:test": "node src/middleware/testAuthenticate.js",
     "auth:me:test": "node src/routes/testMe.js",
     "auth:logout:test": "node src/routes/testLogout.js",
+    "account:test": "node src/routes/testAccount.js",
+    "auth:security:test": "node src/routes/testSecurity.js",
     "services-categories:test": "node --test test/services-categories.test.js",
     "dashboard:test": "node --test test/dashboard.test.js"
   },

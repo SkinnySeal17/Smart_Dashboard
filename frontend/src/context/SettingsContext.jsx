@@ -2,9 +2,10 @@ import { loadCategories, createCategory, editCategory, removeCategory } from "..
 import { getCurrentUser } from "../services/authService";
 import { createContext, useContext, useCallback, useEffect, useMemo, useState } from "react";
 import {
-  loadSettings,
-  saveSettings,
-  defaultSettings,
+  DEFAULTS,
+  loadAccountSettings,
+  saveAccountSettings,
+  resetAccountSettings,
 } from "../services/settingsService";
 import { setDateStyle } from "../utils/date";
 
@@ -21,7 +22,9 @@ function applyTheme(theme) {
 }
 
 export function SettingsProvider({ children }) {
-  const [state, setState] = useState(() => ({ ...loadSettings(), categories: [] }));
+  const [state, setState] = useState(() => ({ ...DEFAULTS, categories: [] }));
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [settingsError, setSettingsError] = useState("");
 
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState("");
@@ -33,6 +36,20 @@ export function SettingsProvider({ children }) {
   }, []);
   useEffect(() => { reloadCategories(); }, [reloadCategories]);
 
+  const reloadSettings = useCallback(async () => {
+    setSettingsLoading(true);
+    setSettingsError("");
+    try {
+      const saved = await loadAccountSettings();
+      setState((current) => ({ ...current, ...saved }));
+    } catch (err) {
+      setSettingsError(err.message);
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, []);
+  useEffect(() => { reloadSettings(); }, [reloadSettings]);
+
   // Profile = the logged-in account (name and email given at registration).
   const [profile, setProfile] = useState({ name: "", email: "" });
   useEffect(() => {
@@ -42,9 +59,6 @@ export function SettingsProvider({ children }) {
       .catch(() => {}); // a 401 already signs the user out in api.js
     return () => { cancelled = true; };
   }, []);
-  useEffect(() => {
-    saveSettings({ ...state, categories: [] });
-  }, [state]);
 
   // Keep the app-wide side effects (theme, date formatting) in sync with prefs.
   useEffect(() => {
@@ -58,7 +72,9 @@ export function SettingsProvider({ children }) {
   const value = useMemo(
     () => ({
       categoriesLoading, categoriesError, reloadCategories,
+      settingsLoading, settingsError, reloadSettings,
       profile,
+      setProfile,
       categories: state.categories,
       notifications: state.notifications,
       appearance: state.appearance,
@@ -66,15 +82,14 @@ export function SettingsProvider({ children }) {
 
       getCategory: (id) => state.categories.find((c) => c.id === id) ?? null,
 
-      updateNotifications: (patch) => {
-        setState((s) => ({
-          ...s,
-          notifications: { ...s.notifications, ...patch },
-        }));
+      updateNotifications: async (patch) => {
+        const saved = await saveAccountSettings(patch);
+        setState((current) => ({ ...current, ...saved }));
       },
 
-      setTheme: (theme) => {
-        setState((s) => ({ ...s, appearance: { ...s.appearance, theme } }));
+      setTheme: async (theme) => {
+        const saved = await saveAccountSettings({ theme });
+        setState((current) => ({ ...current, ...saved }));
       },
 
       addCategory: async (data) => {
@@ -92,15 +107,17 @@ export function SettingsProvider({ children }) {
         setState(s => ({ ...s, categories: s.categories.filter(c => c.id !== id) }));
       },
 
-      updatePreferences: (patch) => {
-        setState((s) => ({ ...s, preferences: { ...s.preferences, ...patch } }));
+      updatePreferences: async (patch) => {
+        const saved = await saveAccountSettings(patch);
+        setState((current) => ({ ...current, ...saved }));
       },
 
-      resetSettings: () => {
-        setState(s => ({ ...defaultSettings(), categories: s.categories }));
+      resetSettings: async () => {
+        const saved = await resetAccountSettings();
+        setState((current) => ({ ...current, ...saved }));
       },
     }),
-    [state, profile, categoriesLoading, categoriesError, reloadCategories],
+    [state, profile, categoriesLoading, categoriesError, reloadCategories, settingsLoading, settingsError, reloadSettings],
   );
 
   return (

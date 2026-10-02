@@ -5,7 +5,7 @@ export function setToken(token) {
   else sessionStorage.removeItem(TOKEN_KEY);
   window.dispatchEvent(new Event('auth-change'));
 }
-export async function api(path, { body, ...options } = {}) {
+export async function api(path, { body, preserveSession = false, ...options } = {}) {
   const token = getToken();
   const response = await fetch(`/api${path}`, {
     ...options,
@@ -15,8 +15,11 @@ export async function api(path, { body, ...options } = {}) {
   if (response.status === 204) return null;
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    if (response.status === 401 && token) setToken(null);
-    throw new Error(data?.message || `Request failed (${response.status}).`);
+    if (response.status === 401 && token && !preserveSession) setToken(null);
+    const error = new Error(data?.message || `Request failed (${response.status}).`);
+    error.status = response.status;
+    error.errors = data?.errors;
+    throw error;
   }
   return data;
 }
